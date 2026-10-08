@@ -1,7 +1,67 @@
-export default function App() {
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import type { Card } from '../engine/types';
+import { BASE_CARDS } from '../data/cards';
+import { RECIPES } from '../data/recipes';
+import { discoveryCount, useStore } from '../state/store';
+import { setMuted, unlockAudio } from '../audio/sounds';
+import { Calculator } from './Calculator';
+import { Dragon, type DragonMood } from './Dragon';
+import { Smooshopedia } from './Smooshopedia';
+import { Tray } from './Tray';
+
+export default function App(): ReactElement {
+  const [state, dispatch] = useStore();
+  const [mood, setMood] = useState<DragonMood>('idle');
+  const [overSlot, setOverSlot] = useState<0 | 1 | null>(null);
+  const pediaButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Base + discovered, deduped by id (discovered wins).
+  const allCards = useMemo<Card[]>(() => {
+    const map = new Map<string, Card>();
+    for (const c of BASE_CARDS) map.set(c.id, c);
+    for (const c of Object.values(state.discovered)) map.set(c.id, c);
+    return [...map.values()];
+  }, [state.discovered]);
+
+  useEffect(() => {
+    setMuted(state.muted);
+  }, [state.muted]);
+
+  // WebAudio must be unlocked inside the first trusted gesture.
+  useEffect(() => {
+    const unlock = (): void => {
+      unlockAudio();
+      document.removeEventListener('pointerdown', unlock);
+      document.removeEventListener('keydown', unlock);
+    };
+    document.addEventListener('pointerdown', unlock, { once: true });
+    document.addEventListener('keydown', unlock, { once: true });
+    return () => {
+      document.removeEventListener('pointerdown', unlock);
+      document.removeEventListener('keydown', unlock);
+    };
+  }, []);
+
+  const onDragOver = useCallback((s: 0 | 1 | null) => setOverSlot(s), []);
+  const found = discoveryCount(state);
+
   return (
-    <main>
-      <h1>Hello Smooshulator</h1>
-    </main>
+    <div className="app">
+      <header className="app__header">
+        <Dragon mood={mood} />
+        <h1 className="title">
+          <span className="title__the">The</span>
+          <span className="title__name">Smooshulator</span>
+        </h1>
+        <div className="score" aria-label={`${found} of ${RECIPES.length} discoveries`} data-testid="score">
+          ★ {found}/{RECIPES.length}
+        </div>
+      </header>
+      <Calculator state={state} dispatch={dispatch} allCards={allCards} setMood={setMood} overSlot={overSlot} />
+      <Tray state={state} dispatch={dispatch} allCards={allCards} onDragOver={onDragOver} pediaButtonRef={pediaButtonRef} />
+      {state.pediaOpen && (
+        <Smooshopedia state={state} dispatch={dispatch} allCards={allCards} fallbackFocus={pediaButtonRef} />
+      )}
+    </div>
   );
 }

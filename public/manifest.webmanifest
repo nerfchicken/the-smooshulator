@@ -2,22 +2,22 @@
   "name": "The Smooshulator",
   "short_name": "Smooshulator",
   "description": "A calculator that smooshes two words together into a brand-new thing.",
-  "id": "/the-smooshulator/",
-  "start_url": "/the-smooshulator/",
-  "scope": "/the-smooshulator/",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0b0a1a",
-  "theme_color": "#0b0a1a",
+  "background_color": "#0b0b1f",
+  "theme_color": "#0b0b1f",
   "icons": [
     {
-      "src": "/the-smooshulator/icon.svg",
+      "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/the-smooshulator/icon.svg",
+      "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable"

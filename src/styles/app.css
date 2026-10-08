@@ -598,3 +598,87 @@ button.card { appearance: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .blink { transform: scaleY(0); }
 }
+
+/* ===== UI additions (App components) ===== */
+/* Self-hosted Nunito ships as "Nunito Variable" via @fontsource-variable. */
+:root { --font-body: 'Nunito Variable', 'Nunito', system-ui, sans-serif; }
+/* Empty slot is a <button>: strip UA chrome so the .slot look is unchanged. */
+button.slot { appearance: none; padding: 0; margin: 0 auto; font: inherit; color: inherit; }
+/* Dragged tray card hovering a slot */
+.slot.is-over { border-color: var(--c-yellow); box-shadow: var(--glow-yellow); }
+.slot--empty.is-over { background: rgba(255, 217, 59, 0.12); }
+/* Random blink cadence set per idle period by Dragon.tsx */
+.dragon .blink { animation-duration: var(--blink-dur, 4s); }
+/* "N more" pill: undiscovered curated recipes involving this card */
+.card__badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  z-index: 2;
+  padding: 2px 7px;
+  border: var(--bw-1) solid var(--c-ink);
+  border-radius: var(--r-pill);
+  background: var(--c-lime);
+  color: var(--c-ink);
+  font-family: var(--font-body);
+  font-weight: 900;
+  font-size: 0.68rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  box-shadow: var(--sh-hard-sm);
+  pointer-events: none;
+}
+/* Result block: hero card + "smoosh again" hint + Copy */
+.result { width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); }
+.result__actions { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; justify-content: center; }
+.result__hint { font-weight: 800; font-size: var(--fs-sm); color: var(--c-text-dim); }
+.btn--sm { min-height: 40px; padding: var(--sp-1) var(--sp-3); font-size: 0.6rem; border-radius: var(--r-sm); }
+.calc__equals:disabled { cursor: not-allowed; filter: saturate(0.35) brightness(0.7); box-shadow: 0 6px 0 var(--c-ink), 0 6px 0 3px var(--c-ink); }
+.calc__equals:disabled:active { transform: none; }
+.pedia__empty { grid-column: 1 / -1; margin: var(--sp-4) 0; text-align: center; font-weight: 700; color: var(--c-text-dim); }
+
+/* ===== Phone fit (UI pass) =====
+   iPhone 13 Safari with its chrome up is 390x664. The calculator alone was ~400px
+   (~440 with a result), so with the tray's 140px floor the toolbar always sat
+   below the fold, and the nowrap title pushed the score pill off the right edge.
+   Tighten spacing, shrink the hero/slots a notch (targets stay >= 56px), and put
+   the toolbar above the tray so Smooshopedia/Random are always on screen; the
+   tray takes whatever height is left and scrolls (a partial row is the cue). */
+@media (max-width: 719px) {
+  :root { --card-w-lg: 104px; --card-h-lg: 130px; }
+  .app {
+    padding: max(var(--sp-2), env(safe-area-inset-top)) var(--sp-2) max(var(--sp-3), env(safe-area-inset-bottom));
+    gap: var(--sp-2);
+  }
+  .app__header { gap: var(--sp-2); grid-template-columns: auto minmax(0, 1fr) auto; }
+  .title { min-width: 0; }
+  .title__name { font-size: clamp(0.75rem, 3.3vw, 1.6rem); }
+  .score { gap: var(--sp-1); padding: var(--sp-2); }
+  .calc { padding: var(--sp-2); gap: var(--sp-2); }
+  .calc__result { min-height: 96px; padding-top: var(--sp-1); }
+  .card--xl { min-height: 96px; padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-3); column-gap: var(--sp-3); }
+  .card--xl .card__emoji { font-size: 3rem; }
+  .card--xl .card__word { font-size: 1.35rem; }
+  .card--xl .card__flavor { font-size: var(--fs-xs); }
+  .result { gap: var(--sp-1); }
+  .btn--sm { min-height: 36px; }
+  .tray { order: 1; min-height: 96px; }
+  /* Three display-font buttons don't fit 374px with emoji + 16px padding: drop the
+     emoji on phones (the colours already say what they are) and tighten padding. */
+  .tray__toolbar > .btn { padding-inline: var(--sp-3); }
+  .tray__toolbar .btn__emoji { display: none; }
+  /* Empty-slot hint ("or type a word") must wrap inside the narrower slot. */
+  .slot--empty::before { max-width: 100%; padding: 0 var(--sp-2); white-space: normal; }
+}
+/* Smooshopedia title: keep the "n / total" count unbreakable; it wraps to its own
+   line (right-aligned) on phones instead of splitting "1 /" and "577". */
+.modal__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-1) var(--sp-3); }
+.modal__count { white-space: nowrap; margin-left: auto; }
+/* While the Smooshopedia is open, its blurred backdrop has to be re-rendered on
+   every frame anything underneath moves. Pause the always-on animations behind
+   it (dragon float/blink, INSERT WORDS pulse, NEW! pulse): cheaper on battery,
+   and the modal stops competing with them. */
+body:has(.modal) .dragon,
+body:has(.modal) .dragon .blink,
+body:has(.modal) .calc__result:empty::before,
+body:has(.modal) .card--new::after { animation-play-state: paused; }
