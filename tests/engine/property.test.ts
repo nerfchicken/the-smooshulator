@@ -1,10 +1,11 @@
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { combine, type Card, type EngineContext } from '../../src/engine';
+import { combine, type Card, type EngineContext, type Recipe } from '../../src/engine';
 
-const dataDir = resolve(__dirname, '../../src/data');
-const hasData = existsSync(resolve(dataDir, 'cards.ts')) && existsSync(resolve(dataDir, 'recipes.ts'));
+// Lazy glob: resolves to an empty record (not a transform error) while src/data is still being written.
+const dataModules = import.meta.glob<Record<string, unknown>>('../../src/data/*.ts');
+const CARDS_PATH = '../../src/data/cards.ts';
+const RECIPES_PATH = '../../src/data/recipes.ts';
+const hasData = CARDS_PATH in dataModules && RECIPES_PATH in dataModules;
 
 const words = (s: string) => s.split(/\s+/).filter(Boolean);
 const hasAdjacentDupe = (s: string) => words(s).some((w, i, arr) => i > 0 && w.toLowerCase() === arr[i - 1].toLowerCase());
@@ -14,10 +15,10 @@ describe.skipIf(!hasData)('property: every pair of base cards smooshes into some
   let ctx: EngineContext;
 
   beforeAll(async () => {
-    const cardsMod = await import(/* @vite-ignore */ resolve(dataDir, 'cards.ts'));
-    const recipesMod = await import(/* @vite-ignore */ resolve(dataDir, 'recipes.ts'));
+    const cardsMod = await dataModules[CARDS_PATH]();
+    const recipesMod = await dataModules[RECIPES_PATH]();
     cards = cardsMod.BASE_CARDS as Card[];
-    ctx = { recipes: recipesMod.RECIPES, cards };
+    ctx = { recipes: recipesMod.RECIPES as Recipe[], cards };
   });
 
   it('has a usable base set', () => {

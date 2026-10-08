@@ -1,10 +1,11 @@
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { combine, pairKey, type Card, type Recipe } from '../../src/engine';
 
-const dataDir = resolve(__dirname, '../../src/data');
-const hasData = existsSync(resolve(dataDir, 'cards.ts')) && existsSync(resolve(dataDir, 'recipes.ts'));
+// Lazy glob: resolves to an empty record (not a transform error) while src/data is still being written.
+const dataModules = import.meta.glob<Record<string, unknown>>('../../src/data/*.ts');
+const CARDS_PATH = '../../src/data/cards.ts';
+const RECIPES_PATH = '../../src/data/recipes.ts';
+const hasData = CARDS_PATH in dataModules && RECIPES_PATH in dataModules;
 
 const BANNED = ['kill', 'dead', 'gun', 'sexy', 'damn', 'hell', 'stupid', 'shut up', 'drugs', 'beer'];
 const MIN_RECIPES = 280;
@@ -20,8 +21,8 @@ describe.skipIf(!hasData)('data integrity: cards + recipes', () => {
   let ids: Set<string>;
 
   beforeAll(async () => {
-    const cardsMod = await import(/* @vite-ignore */ resolve(dataDir, 'cards.ts'));
-    const recipesMod = await import(/* @vite-ignore */ resolve(dataDir, 'recipes.ts'));
+    const cardsMod = await dataModules[CARDS_PATH]();
+    const recipesMod = await dataModules[RECIPES_PATH]();
     cards = cardsMod.BASE_CARDS as Card[];
     recipes = recipesMod.RECIPES as Recipe[];
     ids = new Set(cards.map((c) => c.id));
