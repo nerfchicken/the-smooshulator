@@ -1,0 +1,25 @@
+# The Smooshulator — all tooling runs in this container, nothing on the host.
+#
+#   docker compose up                          # dev server -> http://localhost:5173/the-smooshulator/
+#   docker compose run --rm app npm test       # Vitest unit tests (engine)
+#   docker compose run --rm app npm run e2e    # Playwright e2e (builds, previews on :4173, runs phone + desktop)
+#
+# Other handy ones:
+#   docker compose build                       # rebuild after changing package.json
+#   docker compose run --rm app npm run typecheck
+#   docker compose run --rm app npm run build  # writes dist/ (gitignored)
+#
+# The bind mount keeps your edits live inside the container; the anonymous
+# volume on /app/node_modules keeps the container's Linux node_modules from
+# being shadowed by (or leaking into) the host checkout.
+
+services:
+  app:
+    build: .
+    init: true
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+      - "4173:4173"

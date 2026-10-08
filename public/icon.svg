@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Placeholder icon: neon "=" on a dark arcade-screen tile. Safe to replace. -->
+  <rect width="512" height="512" rx="96" fill="#0b0a1a"/>
+  <rect x="24" y="24" width="464" height="464" rx="80" fill="none" stroke="#ff4fd8" stroke-width="16"/>
+  <rect x="112" y="176" width="288" height="56" rx="12" fill="#39f2ff"/>
+  <rect x="112" y="280" width="288" height="56" rx="12" fill="#ffe84f"/>
+</svg>
