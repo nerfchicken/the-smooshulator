@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   cardFromTypedWord,
   combine,
+  isBanned,
   pairKey,
+  renderFlavor,
   slugify,
   type Card,
   type EngineContext,
@@ -108,11 +110,33 @@ describe('combine — double', () => {
     expect(r.card.word).toBe('Catnip Party');
   });
 
-  it('only doubles the first glyph of a composite emoji', () => {
-    const snuggle = combine(blanket, daddy, ctx).card;
+  it('doubles the noun-side glyph of a discovered card (never more than 2 glyphs)', () => {
+    const snuggle = combine(blanket, daddy, ctx).card; // 🛏️👨
     const r = combine(snuggle, snuggle, ctx);
     expect(r.card.word).toBe('Double Snuggle Daddy');
-    expect(r.card.emoji).toBe('🛏️🛏️');
+    expect(r.card.emoji).toBe('👨👨');
+  });
+
+  it('steps Double -> Triple -> Mega instead of stacking prefixes', () => {
+    const double = combine(cat, cat, ctx).card;
+    const triple = combine(double, double, ctx).card;
+    expect(triple.word).toBe('Triple Cat');
+    expect(triple.emoji).toBe('🐱🐱');
+    expect(triple.modifiers).toEqual(['Triple', 'Kitty', 'Fluffy']);
+    expect(triple.flavor).toBeTruthy();
+    const mega = combine(triple, triple, ctx).card;
+    expect(mega.word).toBe('Mega Cat');
+    expect(combine(mega, mega, ctx).card.word).toBe('Mega Cat');
+    expect([...mega.emoji].length).toBeLessThanOrEqual(4); // two glyphs, allowing surrogates/VS16
+  });
+
+  it('keeps a doubled word within 3 words', () => {
+    const royal: Recipe = { inputs: ['cat', 'cheese'], result: { word: 'Her Royal Cheesiness', emoji: '🐱🧀', flavor: 'Bow.' } };
+    const cheese = card({ id: 'cheese', word: 'Cheese', emoji: '🧀', modifiers: ['Cheesy'] });
+    const her = combine(cat, cheese, { ...ctx, recipes: [royal] }).card;
+    const r = combine(her, her, ctx);
+    expect(words(r.card.word).length).toBeLessThanOrEqual(3);
+    expect(r.card.word).toBe('Double Cheesiness');
   });
 });
 
@@ -151,15 +175,64 @@ describe('combine — modifier mash', () => {
     expect(fromCat || fromDaddy).toBe(true);
   });
 
-  it('uses only the last word of a discovered card as the noun (3-word cap)', () => {
+  it('keeps a 2-word discovered name whole as the noun ("Fire Snuggle Daddy")', () => {
     const snuggle = combine(blanket, daddy, ctx).card; // "Snuggle Daddy"
     const r = combine(snuggle, dragon, ctx);
     expect(r.source).toBe('mash');
     expect(words(r.card.word).length).toBeLessThanOrEqual(3);
-    const [mod, noun] = words(r.card.word);
-    const a = snuggle.modifiers.includes(mod) && noun === 'Dragon';
-    const b = dragon.modifiers.includes(mod) && noun === 'Daddy';
-    expect(a || b).toBe(true);
+    expect(['Fire Snuggle Daddy', 'Scaly Snuggle Daddy', 'Snuggle Dragon']).toContain(r.card.word);
+  });
+
+  it('uses only the last word of a 3-word discovered name as the noun', () => {
+    const royal = card({ id: 'r:x', word: 'Her Royal Cheesiness', emoji: '🐱🧀', modifiers: ['Royal'], base: false });
+    const r = combine(royal, dragon, ctx);
+    expect(words(r.card.word).length).toBeLessThanOrEqual(3);
+    expect(['Fire Cheesiness', 'Scaly Cheesiness', 'Royal Dragon']).toContain(r.card.word);
+  });
+
+  it('uses the noun-side glyph of a discovered card in the composite', () => {
+    const snuggle = combine(blanket, daddy, ctx).card; // 🛏️👨
+    const r = combine(snuggle, dragon, ctx);
+    expect(r.card.emoji).toBe('🐉👨');
+  });
+
+  it('never echoes an input word ("Pizza Soup + Pizza" is not "Pizza Soup")', () => {
+    const pizza = card({ id: 'pizza', word: 'Pizza', emoji: '🍕', modifiers: ['Cheesy', 'Saucy'] });
+    const soup = card({ id: 'r:pizza+soup', word: 'Pizza Soup', emoji: '🍕🍲', modifiers: ['Pizza'], base: false });
+    const r = combine(soup, pizza, ctx);
+    expect(r.card.word.toLowerCase()).not.toBe('pizza soup');
+    expect(r.card.word.toLowerCase()).not.toBe('pizza');
+    expect(['Cheesy Pizza Soup', 'Saucy Pizza Soup']).toContain(r.card.word);
+  });
+
+  it('treats a reordering of an input as an echo too', () => {
+    const fireDragon = card({ id: 'r:fd', word: 'Fire Dragon', emoji: '🔥🐉', modifiers: ['Dragon'], base: false });
+    const fire = card({ id: 'fire', word: 'Fire', emoji: '🔥', modifiers: ['Spicy'] });
+    const r = combine(fireDragon, fire, ctx);
+    expect(r.card.word.toLowerCase()).not.toBe('dragon fire');
+    expect(r.card.word).toBe('Spicy Fire Dragon');
+  });
+
+  it('treats hyphen parts of a modifier as words for the echo check ("Fire-Breathing Fire")', () => {
+    const captain = card({ id: 'r:cf', word: 'Dragon', emoji: '🐉', modifiers: ['Fire-Breathing'], base: false });
+    const fire = card({ id: 'fire', word: 'Fire', emoji: '🔥', modifiers: ['Hot'] });
+    expect(combine(captain, fire, ctx).card.word).toBe('Hot Dragon');
+  });
+
+  it('skips modifiers that spell something banned (typed words leak into chains)', () => {
+    const zorb = card({ id: 'p:x', word: 'Zorb', emoji: '✨', modifiers: ['Sexy', 'Zorb'], base: false });
+    const r = combine(zorb, cat, ctx);
+    expect(isBanned(r.card.word)).toBe(false);
+    expect(r.card.word.length).toBeGreaterThan(0);
+  });
+
+  it('falls back to an "Extra" prefix when nothing else works', () => {
+    const a = card({ id: 'a', word: 'Cat', emoji: '🐱', modifiers: ['Cat'] });
+    const b = card({ id: 'b', word: 'Cat', emoji: '🐈', modifiers: ['Cat'] });
+    const r = combine(a, b, ctx);
+    expect(hasAdjacentDupe(r.card.word)).toBe(false);
+    expect(r.card.word.toLowerCase()).not.toBe('cat');
+    expect(words(r.card.word).length).toBeLessThanOrEqual(3);
   });
 
   it('skips a modifier that already appears in the noun phrase', () => {
@@ -188,10 +261,21 @@ describe('combine — modifier mash', () => {
     expect(hasAdjacentDupe(r.card.word)).toBe(false);
   });
 
-  it('generates a flavor line from a template', () => {
+  it('generates a kid-level flavor line from a template', () => {
     const r = combine(cat, dragon, ctx);
     expect(r.card.flavor).toBeTruthy();
     expect(r.card.flavor!.length).toBeGreaterThan(5);
+    expect(r.card.flavor).not.toMatch(/Science|sensible|Nobody asked/);
+    // Placeholders are filled with the lowercase input words.
+    expect(r.card.flavor).not.toMatch(/\{a\}|\{b\}/);
+    if (/cat|dragon/i.test(r.card.flavor!)) expect(r.card.flavor).toMatch(/\bcat\b|\bdragon\b/i);
+  });
+
+  it('renderFlavor lowercases the words but capitalises sentence starts', () => {
+    expect(renderFlavor('A {b}. But {a}-flavored.', 'Cat', 'Dragon')).toBe('A dragon. But cat-flavored.');
+    expect(renderFlavor('{a}. {b}. Both at once. Oh no.', 'Cat', 'Dragon')).toBe('Cat. Dragon. Both at once. Oh no.');
+    expect(renderFlavor('Smooshed. No refunds.', 'Cat', 'Dragon')).toBe('Smooshed. No refunds.');
+    expect(renderFlavor('Half {a}. Half {b}. All yours.', 'Ice Cream', 'Dog')).toBe('Half ice cream. Half dog. All yours.');
   });
 
   it('varies direction/modifier/flavor across pairs', () => {

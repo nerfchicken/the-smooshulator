@@ -2,6 +2,7 @@ import type { Card, Recipe } from './types';
 import { fnv1a, pick } from './hash';
 import { firstGlyph, glyphs, lastGlyph } from './emoji';
 import { makePortmanteau } from './portmanteau';
+import { isBanned } from './banned';
 
 export type EngineContext = {
   recipes: Recipe[];
@@ -24,20 +25,23 @@ const MAX_PHRASE_WORDS = 3;
 const MAX_TYPED_WORD_LENGTH = 24;
 const FALLBACK_EMOJI = '✨';
 
-/** Flavor templates for mashed cards. {a} / {b} are the input words. */
+/** Flavor templates for mashed cards. {a} / {b} are the (lowercased) input words. */
 const MASH_FLAVORS = [
-  'Part {a}, part {b}, all trouble.',
-  'What happens when {a} meets {b}.',
-  'Half {a}. Half {b}. Fully weird.',
-  'A {a} and a {b} walked into a smoosher.',
-  'Looks like {a}. Acts like {b}.',
-  'Nobody asked for this. Everybody loves it.',
-  '{a} + {b}. Science has gone too far.',
-  'Equal parts {a} and {b}. Zero parts sensible.',
+  'A {b}. But {a}-flavored.',
+  'What if {a} was also {b}? This.',
+  'Smooshed. No refunds.',
+  '{a}. {b}. Both at once. Oh no.',
+  'Half {a}. Half {b}. All yours.',
+  'Nobody planned this. It happened anyway.',
+  'Found in the couch cushions.',
+  'Tastes like {a}. Smells like {b}.',
 ];
 
 /** Last-resort modifiers when every real modifier collides with the noun. */
-const FALLBACK_MODIFIERS = ['Mega', 'Super', 'Ultra', 'Giant'];
+const FALLBACK_MODIFIERS = ['Extra', 'Mega', 'Super', 'Ultra', 'Giant'];
+
+/** Same-card smooshes step through these instead of stacking "Double Double". */
+const DOUBLE_STEPS = ['Double', 'Triple', 'Mega'];
 
 // ---------------------------------------------------------------------------
 // Small string helpers
@@ -116,9 +120,25 @@ function union(a: readonly string[], b: readonly string[], max = Infinity): stri
   return out;
 }
 
+/** Lowercase word parts, treating hyphens like spaces ("Fire-Breathing" -> fire, breathing). */
+const parts = (text: string): string[] => text.toLowerCase().split(/[\s-]+/).filter(Boolean);
+
 function hasAdjacentDuplicate(phrase: string): boolean {
-  const ws = splitWords(phrase).map((w) => w.toLowerCase());
+  const ws = parts(phrase);
   return ws.some((w, i) => i > 0 && w === ws[i - 1]);
+}
+
+/** True when `phrase` has the same words (any order) as one of `inputs`. */
+function echoes(phrase: string, inputs: readonly string[]): boolean {
+  const norm = (t: string): string => parts(t).sort().join(' ');
+  const p = norm(phrase);
+  return inputs.some((w) => norm(w) === p);
+}
+
+/** Fill a flavor template with lowercase words, then capitalise each sentence start. */
+export function renderFlavor(template: string, a: string, b: string): string {
+  const text = template.split('{a}').join(a.toLowerCase()).split('{b}').join(b.toLowerCase());
+  return text.replace(/(^|[.!?]\s+)(\p{Ll})/gu, (_m, pre: string, ch: string) => pre + ch.toUpperCase());
 }
 
 const isTyped = (card: Card): boolean => card.id.startsWith(TYPED_PREFIX);
@@ -146,14 +166,27 @@ function fromRecipe(recipe: Recipe, key: string, first: Card, second: Card): Car
 }
 
 function fromDouble(card: Card, key: string): Card {
-  const glyph = firstGlyph(card.emoji);
+  const ws = splitWords(card.word);
+  const step = DOUBLE_STEPS.indexOf(ws[0] ?? '');
+  const prefix = step === -1 ? DOUBLE_STEPS[0] : DOUBLE_STEPS[Math.min(step + 1, DOUBLE_STEPS.length - 1)];
+  const rest = step === -1 || ws.length === 1 ? ws : ws.slice(1);
+  // Same rule as mash nouns: a short name stays whole, a long one keeps its last word.
+  const noun = (rest.length <= MAX_PHRASE_WORDS - 1 ? rest : rest.slice(-1)).join(' ');
+  const thing = noun.toLowerCase();
+  const flavor =
+    prefix === 'Double'
+      ? `Twice the ${thing}. Twice the trouble.`
+      : prefix === 'Triple'
+        ? `Three times the ${thing}. Three times the trouble.`
+        : `So much ${thing}. Too much ${thing}. Send help.`;
+  const glyph = glyphFor(card);
   return {
     id: 'd:' + key,
-    word: `Double ${card.word}`,
+    word: `${prefix} ${noun}`,
     emoji: glyph + glyph,
-    flavor: `Twice the ${card.word.toLowerCase()}. Twice the trouble.`,
+    flavor,
     tags: [...card.tags],
-    modifiers: union(['Double'], card.modifiers),
+    modifiers: union([prefix], card.modifiers.filter((m) => !DOUBLE_STEPS.includes(m))),
     base: false,
   };
 }
@@ -211,10 +244,10 @@ function fromPortmanteau(first: Card, second: Card, key: string): Card {
   };
 }
 
-/** The noun a card contributes: a nounForm if it has any, else its last word. */
+/** The noun a card contributes: a seeded nounForm if it has any, else its noun phrase. */
 function nounOf(card: Card, seed: number): string {
   if (card.nounForms?.length) return pick(card.nounForms, seed);
-  return lastWord(card.word);
+  return nounPhrase(card);
 }
 
 /** Modifiers a card can contribute; a card with none falls back to its last word. */
@@ -222,33 +255,48 @@ function modifiersOf(card: Card): string[] {
   return card.modifiers.length ? card.modifiers : [lastWord(card.word)];
 }
 
+/** Structural checks: no adjacent repeats, ≤ 3 words, modifier shares no (hyphen) part with the noun. */
 function phraseOk(modifier: string, noun: string): boolean {
   const phrase = `${modifier} ${noun}`;
   if (hasAdjacentDuplicate(phrase)) return false;
   if (splitWords(phrase).length > MAX_PHRASE_WORDS) return false;
-  const mod = modifier.toLowerCase();
-  return !splitWords(noun).some((w) => w.toLowerCase() === mod);
+  const modParts = new Set(parts(modifier));
+  return !parts(noun).some((p) => modParts.has(p));
 }
 
-/** Try every modifier of `from` (starting at the seeded pick) against `noun`. */
-function tryMash(from: Card, noun: string, seed: number): string | undefined {
-  const mods = modifiersOf(from);
-  for (let offset = 0; offset < mods.length; offset++) {
-    const modifier = pick(mods, seed, offset);
-    if (phraseOk(modifier, noun)) return `${modifier} ${noun}`;
-  }
-  return undefined;
-}
-
+/**
+ * "<Modifier> <Noun>", deterministic for the seed. Tries every modifier of x
+ * against y's noun (starting at the seeded pick), then the other direction,
+ * then generic prefixes; a phrase is rejected when it echoes an input word
+ * (same words in any order) or spells something banned.
+ */
 function mashPhrase(first: Card, second: Card, seed: number): string {
   const nounSeed = fnv1a(`${seed}:noun`);
+  const inputs = [first.word, second.word];
+  const ok = (m: string, n: string): boolean => phraseOk(m, n) && !echoes(`${m} ${n}`, inputs) && !isBanned(`${m} ${n}`);
   const [x, y] = seed & 1 ? [second, first] : [first, second];
-  const nounY = lastWord(nounOf(y, nounSeed));
-  const nounX = lastWord(nounOf(x, nounSeed));
+  const nounY = nounOf(y, nounSeed);
+  const nounX = nounOf(x, nounSeed);
+
+  const tryMods = (from: Card, noun: string): string | undefined => {
+    const mods = modifiersOf(from);
+    for (let offset = 0; offset < mods.length; offset++) {
+      const modifier = pick(mods, seed, offset);
+      if (ok(modifier, noun)) return `${modifier} ${noun}`;
+    }
+    return undefined;
+  };
+  const tryFallback = (noun: string): string | undefined => {
+    const m = FALLBACK_MODIFIERS.find((f) => ok(f, noun));
+    return m ? `${m} ${noun}` : undefined;
+  };
+
   return (
-    tryMash(x, nounY, seed) ??
-    tryMash(y, nounX, seed) ??
-    `${FALLBACK_MODIFIERS.find((m) => phraseOk(m, nounY)) ?? FALLBACK_MODIFIERS[0]} ${nounY}`
+    tryMods(x, nounY) ??
+    tryMods(y, nounX) ??
+    tryFallback(nounY) ??
+    tryFallback(nounX) ??
+    `${FALLBACK_MODIFIERS[0]} ${lastWord(nounY)}`
   );
 }
 
@@ -259,7 +307,7 @@ function fromMash(first: Card, second: Card, key: string): Card {
     id: 'm:' + key,
     word: mashPhrase(first, second, seed),
     emoji: glyphFor(first) + glyphFor(second),
-    flavor: template.replace('{a}', first.word).replace('{b}', second.word),
+    flavor: renderFlavor(template, first.word, second.word),
     tags: union(first.tags, second.tags),
     modifiers: union(first.modifiers, second.modifiers, MAX_MODIFIERS),
     base: false,

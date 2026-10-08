@@ -59,4 +59,40 @@ describe.skipIf(!hasData)('property: every pair of base cards smooshes into some
       expect(hasAdjacentDupe(r.card.word)).toBe(false);
     }
   });
+
+  it('every level-1 card smooshed with either of its own inputs gives a new word, ≤ 3 words', () => {
+    const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+    const failures: string[] = [];
+    for (let i = 0; i < cards.length; i++) {
+      for (let j = i + 1; j < cards.length; j++) {
+        const d = combine(cards[i], cards[j], ctx).card;
+        for (const input of [cards[i], cards[j]]) {
+          const r = combine(d, input, ctx);
+          const label = `"${d.word}" + ${input.id} -> "${r.card.word}"`;
+          if (same(r.card.word, d.word) || same(r.card.word, input.word)) failures.push(`${label}: echoes an input`);
+          if (words(r.card.word).length > 3) failures.push(`${label}: more than 3 words`);
+          if (hasAdjacentDupe(r.card.word)) failures.push(`${label}: adjacent duplicate`);
+          if (!r.card.emoji.trim()) failures.push(`${label}: empty emoji`);
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it('doubling any level-1 card, twice, stays within 3 words and never stacks prefixes', () => {
+    const failures: string[] = [];
+    for (let i = 0; i < cards.length; i++) {
+      for (let j = i; j < cards.length; j++) {
+        const d = combine(cards[i], cards[j], ctx).card;
+        const dd = combine(d, d, ctx).card;
+        const ddd = combine(dd, dd, ctx).card;
+        for (const c of [dd, ddd]) {
+          if (words(c.word).length > 3) failures.push(`"${c.word}": more than 3 words`);
+          if (/^(Double|Triple|Mega) (Double|Triple|Mega)\b/.test(c.word)) failures.push(`"${c.word}": stacked prefix`);
+          if ([...c.emoji].length > 6) failures.push(`"${c.word}": emoji grew (${c.emoji})`);
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
 });
