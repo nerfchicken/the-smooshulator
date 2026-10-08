@@ -204,44 +204,87 @@ describe('combine — modifier mash', () => {
 
 describe('combine — portmanteau for typed words', () => {
   const emojiMap = { rocket: '🚀', cat: '🐱' };
+  const typed = (t: string, known: Card[] = ctx.cards) => cardFromTypedWord(t, emojiMap, known)!;
 
-  it('blends a typed word with a known card and stores the phrase in flavor', () => {
-    const blorp = cardFromTypedWord('blorp', emojiMap, ctx.cards);
+  it('typed word leads: "<Typed> <Base>" with the portmanteau kept in the flavor', () => {
+    const blorp = typed('blorp');
     const r = combine(blorp, dragon, ctx);
     expect(r.source).toBe('portmanteau');
     expect(r.card.id).toBe('p:' + pairKey('typed:blorp', 'dragon'));
-    expect(r.card.word).toBe('Dragorp');
-    expect(r.card.flavor).toBe('A Dragon Blorp. Obviously.');
-    expect(r.card.emoji).toBe('🐉✨');
-    expect(r.card.modifiers).toEqual(['Fire', 'Scaly', 'Blorp']);
+    expect(r.card.word).toBe('Blorp Dragon');
+    expect(r.card.flavor).toBe('Aka Blorpagon. Obviously.');
+    expect(r.card.emoji).toBe('✨🐉');
+    expect(r.card.modifiers).toEqual(['Blorp', 'Fire', 'Scaly']);
     expect(r.card.base).toBe(false);
   });
 
+  it('the typed card leads regardless of id sort order', () => {
+    const ava = typed('Ava'); // "typed:ava" sorts after "cat" but before "dragon"? Irrelevant: typed leads.
+    expect(combine(ava, cat, ctx).card.word).toBe('Ava Cat');
+    expect(combine(cat, ava, ctx).card.word).toBe('Ava Cat');
+    expect(combine(typed('zorb'), cat, ctx).card.word).toBe('Zorb Cat');
+    expect(combine(typed('Minecraft'), dragon, ctx).card.word).toBe('Minecraft Dragon');
+  });
+
+  it('keeps a short discovered word whole as the noun and caps at 3 words', () => {
+    const snuggle = combine(blanket, daddy, ctx).card; // "Snuggle Daddy"
+    expect(combine(typed('blorp'), snuggle, ctx).card.word).toBe('Blorp Snuggle Daddy');
+    expect(combine(typed('space rocket'), snuggle, ctx).card.word).toBe('Space Rocket Daddy');
+    expect(combine(typed('big red dog'), dragon, ctx).card.word).toBe('Big Red Dragon');
+  });
+
+  it('never echoes an input word even when the typed word overlaps the noun', () => {
+    const snuggle = combine(blanket, daddy, ctx).card;
+    const r = combine(typed('snuggle'), snuggle, ctx);
+    expect(r.card.word.toLowerCase()).not.toBe('snuggle daddy');
+    expect(r.card.word.toLowerCase()).not.toBe('snuggle');
+    expect(words(r.card.word).length).toBeLessThanOrEqual(3);
+  });
+
+  it('a typed emoji still gets a readable flavor', () => {
+    const squid = typed('🦑', []);
+    const r = combine(squid, dragon, ctx);
+    expect(r.card.word).toBe('🦑 Dragon');
+    expect(r.card.flavor).not.toBe('Aka Dragon. Obviously.');
+    expect(r.card.flavor).toContain('🦑');
+  });
+
   it('blends two typed words', () => {
-    const a = cardFromTypedWord('blanket', emojiMap, []);
-    const b = cardFromTypedWord('daddy', emojiMap, []);
+    const a = typed('blanket', []);
+    const b = typed('daddy', []);
     const r = combine(a, b, ctx);
     expect(r.source).toBe('portmanteau');
     expect(r.card.word).toBe('Blankaddy');
     expect(r.card.flavor).toBe('A Blanket Daddy. Obviously.');
   });
 
+  it('uses "An" before a vowel for two typed words', () => {
+    const r = combine(typed('apple', []), typed('dragon', []), ctx);
+    expect(r.card.flavor).toBe('An Apple Dragon. Obviously.');
+  });
+
+  it('two typed words never collapse to one of them', () => {
+    const r = combine(typed('🦑', []), typed('blorp', []), ctx);
+    expect(r.card.word.toLowerCase()).not.toBe('blorp');
+    expect(r.card.word).toContain('Blorp');
+  });
+
   it('doubles a typed word combined with itself', () => {
-    const a = cardFromTypedWord('blorp', emojiMap, []);
-    const r = combine(a, cardFromTypedWord('Blorp', emojiMap, []), ctx);
+    const a = typed('blorp', []);
+    const r = combine(a, typed('Blorp', []), ctx);
     expect(r.source).toBe('double');
     expect(r.card.word).toBe('Double Blorp');
   });
 
   it('a typed word matching a known card resolves to that card (so recipes still fire)', () => {
-    const typed = cardFromTypedWord('BLANKET', emojiMap, ctx.cards);
-    expect(typed).toBe(blanket);
-    expect(combine(typed, daddy, ctx).source).toBe('recipe');
+    const t = typed('BLANKET');
+    expect(t).toBe(blanket);
+    expect(combine(t, daddy, ctx).source).toBe('recipe');
   });
 });
 
 describe('cardFromTypedWord', () => {
-  const emojiMap = { rocket: '🚀', cat: '🐱', dog: '🐶' };
+  const emojiMap = { rocket: '🚀', cat: '🐱', dog: '🐶', pig: '🐷', fire: '🔥', firetruck: '🚒' };
 
   it('matches known cards by word, id or nounForm, case-insensitively', () => {
     expect(cardFromTypedWord(' daddy ', emojiMap, ctx.cards)).toBe(daddy);
@@ -252,7 +295,7 @@ describe('cardFromTypedWord', () => {
   });
 
   it('builds a typed card with Title Case word, slug id, and [Word] modifiers', () => {
-    const c = cardFromTypedWord('  space   rocket ', emojiMap, ctx.cards);
+    const c = cardFromTypedWord('  space   rocket ', emojiMap, ctx.cards)!;
     expect(c.id).toBe('typed:space-rocket');
     expect(c.word).toBe('Space Rocket');
     expect(c.tags).toEqual([]);
@@ -260,24 +303,94 @@ describe('cardFromTypedWord', () => {
     expect(c.base).toBe(false);
   });
 
+  it('keeps inner capitals as typed, otherwise capitalises the first letter only', () => {
+    expect(cardFromTypedWord('iPhone', emojiMap, [])!.word).toBe('iPhone');
+    expect(cardFromTypedWord('LEGO', emojiMap, [])!.word).toBe('LEGO');
+    expect(cardFromTypedWord('minecraft', emojiMap, [])!.word).toBe('Minecraft');
+    expect(cardFromTypedWord('big RED dog', emojiMap, [])!.word).toBe('Big RED Dog');
+  });
+
   it('truncates the word to 24 characters', () => {
-    const c = cardFromTypedWord('supercalifragilisticexpialidocious', emojiMap, []);
+    const c = cardFromTypedWord('supercalifragilisticexpialidocious', emojiMap, [])!;
     expect(c.word.length).toBeLessThanOrEqual(24);
     expect(c.word).toBe('Supercalifragilisticexpi');
   });
 
-  it('looks up emoji by exact word, then singular/plural, then substring, else sparkles', () => {
-    expect(cardFromTypedWord('rocket', emojiMap, []).emoji).toBe('🚀');
-    expect(cardFromTypedWord('rockets', emojiMap, []).emoji).toBe('🚀');
-    expect(cardFromTypedWord('cats', emojiMap, []).emoji).toBe('🐱');
-    expect(cardFromTypedWord('hotdog', emojiMap, []).emoji).toBe('🐶');
-    expect(cardFromTypedWord('blorp', emojiMap, []).emoji).toBe('✨');
+  it('truncates on grapheme boundaries, never splitting an emoji', () => {
+    const c = cardFromTypedWord('a'.repeat(23) + '🐱zz', emojiMap, [])!;
+    expect(c.word).toBe('A' + 'a'.repeat(22) + '🐱');
+    expect(c.word).not.toMatch(/[\ud800-\udfff]/u); // no lone surrogate
+    expect(c.modifiers[0]).toBe(c.word);
   });
 
-  it('handles empty input without throwing', () => {
-    const c = cardFromTypedWord('   ', emojiMap, []);
-    expect(c.word.length).toBeGreaterThan(0);
-    expect(c.id.startsWith('typed:')).toBe(true);
+  it('returns null for empty or punctuation-only input', () => {
+    expect(cardFromTypedWord('', emojiMap, [])).toBeNull();
+    expect(cardFromTypedWord('   ', emojiMap, [])).toBeNull();
+    expect(cardFromTypedWord('!!!', emojiMap, [])).toBeNull();
+    expect(cardFromTypedWord(' ... --- ', emojiMap, [])).toBeNull();
+  });
+
+  it('a single typed emoji resolves to the known card with that emoji', () => {
+    expect(cardFromTypedWord('🐱', emojiMap, ctx.cards)).toBe(cat);
+    expect(cardFromTypedWord(' 🛏️ ', emojiMap, ctx.cards)).toBe(blanket);
+  });
+
+  it('a single typed emoji in the map but not in the known cards becomes an emoji card', () => {
+    const c = cardFromTypedWord('🚀', emojiMap, ctx.cards)!;
+    expect(c.id).toBe('typed:u1f680');
+    expect(c.word).toBe('🚀');
+    expect(c.emoji).toBe('🚀');
+    expect(c.modifiers).toEqual(['🚀']);
+  });
+
+  it('an unknown emoji (including multi-codepoint ones) gets a codepoint id and itself as picture', () => {
+    const squid = cardFromTypedWord('🦑', emojiMap, ctx.cards)!;
+    expect(squid.id).toBe('typed:u1f991');
+    expect(squid.emoji).toBe('🦑');
+    const pirate = cardFromTypedWord('🏴‍☠️', emojiMap, [])!;
+    expect(pirate.id).toBe('typed:u1f3f4-200d-2620-fe0f');
+    expect(pirate.emoji).toBe('🏴‍☠️');
+  });
+
+  it('several emoji or non-Latin text get distinct ids and do not collapse', () => {
+    const poo2 = cardFromTypedWord('💩💩', emojiMap, [])!;
+    expect(poo2.id).toBe('typed:u1f4a9-1f4a9');
+    expect(poo2.word).toBe('💩💩');
+    expect(poo2.emoji).toBe('💩');
+    const jp = cardFromTypedWord('日本', emojiMap, [])!;
+    expect(jp.id).toBe('typed:u65e5-672c');
+    expect(jp.word).toBe('日本');
+    expect(jp.id).not.toBe(poo2.id);
+  });
+
+  it('resolves aliases (typed form -> card id) when given', () => {
+    const aliases = { kitty: 'cat', 'fire breather': 'dragon', nobody: 'no-such-card' };
+    expect(cardFromTypedWord('Kitty', emojiMap, ctx.cards, aliases)).toBe(cat);
+    expect(cardFromTypedWord('fire breather', emojiMap, ctx.cards, aliases)).toBe(dragon);
+    // Alias pointing at an unknown id falls through to a typed card.
+    expect(cardFromTypedWord('nobody', emojiMap, ctx.cards, aliases)!.id).toBe('typed:nobody');
+    // Aliases are optional and absent by default.
+    expect(cardFromTypedWord('kitty', emojiMap, ctx.cards)!.id).toBe('typed:kitty');
+  });
+
+  it('resolves naive plurals against known cards and aliases', () => {
+    expect(cardFromTypedWord('cats', emojiMap, ctx.cards)).toBe(cat);
+    expect(cardFromTypedWord('DRAGONS', emojiMap, ctx.cards)).toBe(dragon);
+    expect(cardFromTypedWord('dads', emojiMap, ctx.cards)).toBe(daddy);
+    expect(cardFromTypedWord('toothbrushes', emojiMap, ctx.cards)).toBe(toothbrush);
+    expect(cardFromTypedWord('kitties', emojiMap, ctx.cards, { kitty: 'cat' })).toBe(cat);
+    expect(cardFromTypedWord('puppies', emojiMap, ctx.cards)!.id).toBe('typed:puppies');
+  });
+
+  it('looks up emoji by exact word, then singular/plural, then longest substring key (4+ letters), else sparkles', () => {
+    expect(cardFromTypedWord('rocket', emojiMap, [])!.emoji).toBe('🚀');
+    expect(cardFromTypedWord('rockets', emojiMap, [])!.emoji).toBe('🚀');
+    expect(cardFromTypedWord('rocketship', emojiMap, [])!.emoji).toBe('🚀');
+    expect(cardFromTypedWord('superfiretrucks', emojiMap, [])!.emoji).toBe('🚒');
+    // Short keys (< 4 letters) never match as substrings: no 🐷 for pigeon, no 🐶 for hotdog.
+    expect(cardFromTypedWord('pigeon', emojiMap, [])!.emoji).toBe('✨');
+    expect(cardFromTypedWord('hotdog', emojiMap, [])!.emoji).toBe('✨');
+    expect(cardFromTypedWord('blorp', emojiMap, [])!.emoji).toBe('✨');
   });
 });
 
@@ -300,7 +413,9 @@ describe('combine — determinism', () => {
   });
 
   it('typed-word portmanteaus are symmetric too', () => {
-    const a = cardFromTypedWord('blorp', {}, []);
+    const a = cardFromTypedWord('blorp', {}, [])!;
     expect(combine(a, dragon, ctx)).toEqual(combine(dragon, a, ctx));
+    const ava = cardFromTypedWord('ava', {}, [])!;
+    expect(combine(ava, cat, ctx)).toEqual(combine(cat, ava, ctx));
   });
 });

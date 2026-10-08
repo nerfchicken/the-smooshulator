@@ -19,6 +19,12 @@ export function firstGlyph(emoji: string): string {
   return glyphs(emoji)[0] ?? '';
 }
 
+/** Last glyph of an emoji string (the noun side of a discovered card's composite). */
+export function lastGlyph(emoji: string): string {
+  const g = glyphs(emoji);
+  return g[g.length - 1] ?? '';
+}
+
 /** Two-glyph composite of two cards' emoji. */
 export function composite(a: string, b: string): string {
   return firstGlyph(a) + firstGlyph(b);
