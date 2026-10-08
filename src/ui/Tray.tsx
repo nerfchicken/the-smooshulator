@@ -171,7 +171,7 @@ export function Tray({ state, dispatch, allCards, onDragOver, pediaButtonRef }: 
             key={card.id}
             card={card}
             selected={inSlots.has(card.id)}
-            badge={remaining.get(card.id)}
+            secret={(remaining.get(card.id) ?? 0) > 0}
             ariaLabel={card.word}
             onClick={onPick(card)}
             onPointerDown={onPointerDown(card)}

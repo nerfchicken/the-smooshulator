@@ -9,8 +9,8 @@ type Props = {
   size?: CardSize;
   isNew?: boolean;
   selected?: boolean;
-  /** Undiscovered curated recipes involving this card; renders a small pill when > 0. */
-  badge?: number;
+  /** This card still has undiscovered curated recipes: shows a small ★ dot. */
+  secret?: boolean;
   popping?: boolean;
   ghost?: boolean;
   className?: string;
@@ -45,7 +45,7 @@ export function CardEmoji({ emoji }: { emoji: string }): ReactElement {
  * given, otherwise a plain <div> (ghost, static display).
  */
 export const CardView = forwardRef<HTMLButtonElement, Props>(function CardView(
-  { card, size = 'md', isNew, selected, badge, popping, ghost, className, style, ariaLabel, onClick, ...pointer },
+  { card, size = 'md', isNew, selected, secret, popping, ghost, className, style, ariaLabel, onClick, ...pointer },
   ref,
 ) {
   const classes = ['card'];
@@ -60,9 +60,9 @@ export const CardView = forwardRef<HTMLButtonElement, Props>(function CardView(
 
   const body = (
     <>
-      {badge !== undefined && badge > 0 && (
-        <span className="card__badge" title={`${badge} more to find`}>
-          {badge} more
+      {secret && (
+        <span className="card__secret" title="still has secrets" aria-hidden="true">
+          ★
         </span>
       )}
       <CardEmoji emoji={card.emoji} />

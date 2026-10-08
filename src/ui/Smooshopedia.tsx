@@ -5,6 +5,7 @@ import type { Action, State } from '../state/store';
 import { blip } from '../audio/sounds';
 import { CardView } from './CardView';
 import { wordFromId } from './emoji';
+import { remainingRecipeCounts } from './Tray';
 
 type Props = {
   state: State;
@@ -19,6 +20,7 @@ type Ref = { emoji: string; word: string };
 export function Smooshopedia({ state, dispatch, allCards, fallbackFocus }: Props): ReactElement {
   const closeRef = useRef<HTMLButtonElement>(null);
   const byId = useMemo(() => new Map(allCards.map((c) => [c.id, c])), [allCards]);
+  const remaining = useMemo(() => remainingRecipeCounts(state.log), [state.log]);
 
   const resolve = (id: string): Ref => {
     const c = byId.get(id) ?? state.discovered[id];
@@ -86,12 +88,18 @@ export function Smooshopedia({ state, dispatch, allCards, fallbackFocus }: Props
           )}
           {entries.map(({ d, card }) => {
             const [i1, i2] = d.inputs.map(resolve);
+            const more = remaining.get(card.id) ?? 0;
             return (
               <div className="pedia__entry" key={d.key}>
-                <CardView card={card} ariaLabel={`${card.word}. Tap to use it.`} onClick={() => pick(card)} />
+                <CardView card={card} secret={more > 0} ariaLabel={`${card.word}. Tap to use it.`} onClick={() => pick(card)} />
                 <div className="pedia__recipe">
                   <span className="emoji">{i1.emoji}</span> {i1.word} + <span className="emoji">{i2.emoji}</span> {i2.word}
                 </div>
+                {more > 0 && (
+                  <div className="pedia__more">
+                    ★ {more} more to find
+                  </div>
+                )}
               </div>
             );
           })}

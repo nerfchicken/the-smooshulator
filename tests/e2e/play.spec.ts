@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 });
 
 test('tap Cat + Dog, smoosh, result appears and the star count becomes 1', async ({ page }) => {
-  await expect(page.getByTestId('score')).toContainText('0/');
+  await expect(page.getByTestId('score')).toHaveText(/★\s*0$/);
   await expect(smoosh(page)).toBeDisabled();
   await card(page, 'Cat').click();
   await card(page, 'Dog').click();
@@ -31,11 +31,11 @@ test('tap Cat + Dog, smoosh, result appears and the star count becomes 1', async
   const word = (await resultCard(page).locator('.card__word').textContent())?.trim() ?? '';
   expect(word.length).toBeGreaterThan(0);
   await expect(resultCard(page)).toHaveClass(/card--new/);
-  await expect(page.getByTestId('score')).toContainText('1/');
+  await expect(page.getByTestId('score')).toHaveText(/★\s*1$/);
 
   // Reload: the discovery persists and the Smooshopedia lists it with its recipe.
   await page.reload();
-  await expect(page.getByTestId('score')).toContainText('1/');
+  await expect(page.getByTestId('score')).toHaveText(/★\s*1$/);
   await page.getByRole('button', { name: /Smooshopedia/ }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();

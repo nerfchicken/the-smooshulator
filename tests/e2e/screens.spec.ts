@@ -76,7 +76,7 @@ test('Smooshopedia scrolls when full', async ({ page }, testInfo) => {
   // a plain evaluate() can race the freshly reloaded page's mount effect.
   await page.addInitScript((raw: string) => localStorage.setItem('smooshulator.v1', raw), JSON.stringify(seed));
   await page.reload();
-  await expect(page.getByTestId('score')).toContainText('30/');
+  await expect(page.getByTestId('score')).toHaveText(/★\s*30$/);
 
   await page.getByRole('button', { name: /Smooshopedia/ }).click();
   const dialog = page.getByRole('dialog');

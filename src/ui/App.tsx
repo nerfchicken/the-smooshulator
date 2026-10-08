@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import type { Card } from '../engine/types';
 import { BASE_CARDS } from '../data/cards';
-import { RECIPES } from '../data/recipes';
 import { discoveryCount, useStore } from '../state/store';
 import { setMuted, unlockAudio } from '../audio/sounds';
 import { Calculator } from './Calculator';
@@ -50,8 +49,8 @@ export default function App(): ReactElement {
           <span className="title__the">The</span>
           <span className="title__name">Smooshulator</span>
         </h1>
-        <div className="score" aria-label={`${found} of ${RECIPES.length} discoveries`} data-testid="score">
-          ★ {found}/{RECIPES.length}
+        <div className="score" aria-label={`${found} ${found === 1 ? 'discovery' : 'discoveries'}`} data-testid="score">
+          ★ {found}
         </div>
       </header>
       <Calculator state={state} dispatch={dispatch} allCards={allCards} setMood={setMood} overSlot={overSlot} />

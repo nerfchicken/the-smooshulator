@@ -611,25 +611,26 @@ button.slot { appearance: none; padding: 0; margin: 0 auto; font: inherit; color
 .slot__input.is-rejected { animation: shake var(--d-slow) ease-in-out 1; border-color: var(--c-pink); box-shadow: var(--sh-hard), var(--glow-pink); }
 /* Random blink cadence set per idle period by Dragon.tsx */
 .dragon .blink { animation-duration: var(--blink-dur, 4s); }
-/* "N more" pill: undiscovered curated recipes involving this card */
-.card__badge {
+/* ★ dot: this card still has undiscovered curated recipes (count lives in the Smooshopedia) */
+.card__secret {
   position: absolute;
-  top: -8px;
-  left: -8px;
+  top: -7px;
+  left: -7px;
   z-index: 2;
-  padding: 2px 7px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
   border: var(--bw-1) solid var(--c-ink);
   border-radius: var(--r-pill);
-  background: var(--c-lime);
+  background: var(--c-yellow);
   color: var(--c-ink);
-  font-family: var(--font-body);
-  font-weight: 900;
-  font-size: 0.68rem;
-  line-height: 1.3;
-  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1;
   box-shadow: var(--sh-hard-sm);
   pointer-events: none;
 }
+.pedia__more { font-weight: 800; font-size: var(--fs-xs); color: var(--c-yellow); }
 /* Result block: hero card + "smoosh again" hint + Copy */
 .result { width: 100%; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); }
 .result__actions { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; justify-content: center; }
