@@ -283,3 +283,95 @@ describe('persistence', () => {
     }
   });
 });
+
+describe('persistence: validation of hand-edited or corrupted saves', () => {
+  let storage: Storage;
+  beforeEach(() => {
+    storage = memoryStorage();
+  });
+
+  const persisted = (discovered: Record<string, unknown>, log: unknown[]) => {
+    storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, discovered, log, muted: false }));
+    return load(storage);
+  };
+  const entry = (cardId: string, key = `k:${cardId}`) => ({ key, cardId, inputs: ['a', 'b'], at: 1, source: 'mash' });
+
+  it('drops cards whose modifiers, tags or nounForms contain non-strings', () => {
+    const good = card('good', { base: false });
+    const s = persisted(
+      {
+        good,
+        badMods: { ...card('badMods', { base: false }), modifiers: [null] },
+        badTags: { ...card('badTags', { base: false }), tags: [1, 'x'] },
+        badNouns: { ...card('badNouns', { base: false }), nounForms: [{}] },
+      },
+      [entry('good'), entry('badMods'), entry('badTags'), entry('badNouns')],
+    );
+    expect(Object.keys(s.discovered)).toEqual(['good']);
+    expect(s.log.map((d) => d.cardId)).toEqual(['good']);
+  });
+
+  it('drops cards with an empty or blank emoji', () => {
+    const s = persisted(
+      { blank: { ...card('blank', { base: false }), emoji: '   ' }, empty: { ...card('empty', { base: false }), emoji: '' } },
+      [entry('blank'), entry('empty')],
+    );
+    expect(s.discovered).toEqual({});
+    expect(s.log).toEqual([]);
+  });
+
+  it('drops log entries whose card is not in discovered, so the counter matches the tray', () => {
+    const x = card('x', { base: false });
+    const s = persisted({ x }, [entry('x'), entry('ghost'), entry('x', 'another-route')]);
+    expect(s.log.map((d) => d.key)).toEqual(['k:x', 'another-route']);
+    expect(discoveryCount(s)).toBe(2);
+  });
+
+  it('round-trips a save containing typed: inputs and emoji words', () => {
+    const squid = card('p:dragon+typed:u1f991', { word: '🦑 Dragon', emoji: '🦑🐉', base: false });
+    const s = reducer(initialState, { type: 'smooshed', result: result(squid, ['dragon', 'typed:u1f991']) });
+    save(s, storage);
+    expect(load(storage).discovered).toEqual({ [squid.id]: squid });
+    expect(load(storage).log[0].inputs).toEqual(['dragon', 'typed:u1f991']);
+  });
+});
+
+describe('reducer: smooshed dedupes by word', () => {
+  const mashed = card('m:blanket+r:daddy+dog', { word: 'Snuggle Daddy', emoji: '🛏️🐶', base: false });
+  const curated = card('r:blanket+daddy', { word: 'Snuggle Daddy', emoji: '🛏️👨', flavor: 'Warm. Snoring.', base: false });
+
+  it('reuses an already-discovered card with the same word instead of adding a twin', () => {
+    const s1 = reducer(initialState, { type: 'smooshed', result: result(curated, ['blanket', 'daddy']) });
+    const s2 = reducer(s1, { type: 'smooshed', result: result(mashed, ['blanket', 'r:daddy+dog']) });
+    expect(Object.keys(s2.discovered)).toEqual([curated.id]);
+    expect(s2.result?.card).toBe(curated);
+    expect(s2.result?.isNew).toBe(false);
+    // The new route is still remembered, against the existing card.
+    expect(s2.log).toHaveLength(2);
+    expect(s2.log[1]).toMatchObject({ key: 'blanket+r:daddy+dog', cardId: curated.id });
+  });
+
+  it('matches words case-insensitively', () => {
+    const s1 = reducer(initialState, { type: 'smooshed', result: result(curated, ['blanket', 'daddy']) });
+    const lower = { ...mashed, word: 'snuggle daddy' };
+    const s2 = reducer(s1, { type: 'smooshed', result: result(lower, ['blanket', 'r:daddy+dog']) });
+    expect(s2.result?.card).toBe(curated);
+  });
+
+  it('lets a curated recipe replace an earlier mash with the same word', () => {
+    const s1 = reducer(initialState, { type: 'smooshed', result: result(mashed, ['blanket', 'r:daddy+dog']) });
+    const r: CombineResult = { card: curated, source: 'recipe', key: 'blanket+daddy', inputs: ['blanket', 'daddy'] };
+    const s2 = reducer(s1, { type: 'smooshed', result: r });
+    expect(Object.keys(s2.discovered)).toEqual([curated.id]);
+    expect(s2.result).toEqual({ card: curated, isNew: true, source: 'recipe', key: 'blanket+daddy' });
+    // Old log entries now point at the surviving card.
+    expect(s2.log.map((d) => d.cardId)).toEqual([curated.id, curated.id]);
+  });
+
+  it('does not touch a re-smoosh of the very same card', () => {
+    const s1 = reducer(initialState, { type: 'smooshed', result: result(curated, ['blanket', 'daddy']) });
+    const s2 = reducer(s1, { type: 'smooshed', result: result(curated, ['blanket', 'daddy']) });
+    expect(s2.result?.isNew).toBe(false);
+    expect(s2.log).toHaveLength(1);
+  });
+});

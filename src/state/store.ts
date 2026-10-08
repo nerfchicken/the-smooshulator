@@ -83,15 +83,33 @@ export function reducer(state: State, action: Action): State {
     }
 
     case 'smooshed': {
-      const { card, key, source, inputs } = action.result;
-      const isNew = !state.log.some((d) => d.key === key);
-      const log = isNew
-        ? [...state.log, { key, cardId: card.id, inputs, at: action.at ?? Date.now(), source }]
-        : state.log;
+      const { key, source, inputs } = action.result;
+      let { card } = action.result;
+      let { discovered, log } = state;
+      const keyIsNew = !log.some((d) => d.key === key);
+      let isNew = keyIsNew;
+
+      // The same word can be reached by different routes (a mash landing on a
+      // curated name, or two mashes agreeing). Keep one card per word: reuse
+      // the existing one, unless the newcomer is curated and the old one was
+      // not, in which case the curated card takes over the old one's history.
+      const twin = Object.values(discovered).find((c) => c.id !== card.id && sameWord(c.word, card.word));
+      if (twin) {
+        const twinCurated = log.some((d) => d.cardId === twin.id && d.source === 'recipe');
+        if (source === 'recipe' && !twinCurated) {
+          discovered = Object.fromEntries(Object.entries(discovered).filter(([id]) => id !== twin.id));
+          log = log.map((d) => (d.cardId === twin.id ? { ...d, cardId: card.id } : d));
+        } else {
+          card = twin;
+          isNew = false;
+        }
+      }
+
+      if (keyIsNew) log = [...log, { key, cardId: card.id, inputs, at: action.at ?? Date.now(), source }];
       return {
         ...state,
         result: { card, isNew, source, key },
-        discovered: { ...state.discovered, [card.id]: card },
+        discovered: { ...discovered, [card.id]: card },
         log,
       };
     }
@@ -127,6 +145,8 @@ export function reducer(state: State, action: Action): State {
   }
 }
 
+const sameWord = (a: string, b: string): boolean => a.trim().toLowerCase() === b.trim().toLowerCase();
+
 function pickIndex(n: number, rng: () => number): number {
   const r = rng();
   const i = Math.floor((Number.isFinite(r) ? r : 0) * n);
@@ -151,14 +171,19 @@ function defaultStorage(): Storage | undefined {
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
+const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((s) => typeof s === 'string');
+
+/** Strict enough that nothing here can make the engine throw (e.g. `modifiers: [null]`). */
 function isCard(v: unknown): v is Card {
   return (
     isRecord(v) &&
     typeof v.id === 'string' &&
     typeof v.word === 'string' &&
     typeof v.emoji === 'string' &&
-    Array.isArray(v.tags) &&
-    Array.isArray(v.modifiers) &&
+    v.emoji.trim() !== '' &&
+    isStringArray(v.tags) &&
+    isStringArray(v.modifiers) &&
+    (v.nounForms === undefined || isStringArray(v.nounForms)) &&
     typeof v.base === 'boolean'
   );
 }
@@ -190,7 +215,9 @@ function parsePersisted(raw: string | null): Persisted | null {
   for (const [id, card] of Object.entries(data.discovered)) {
     if (isCard(card)) discovered[id] = card;
   }
-  const log = data.log.filter(isDiscovery);
+  // Orphaned entries (card dropped above, or never saved) would inflate the
+  // discovery counter with cards the tray cannot show.
+  const log = data.log.filter(isDiscovery).filter((d) => Object.prototype.hasOwnProperty.call(discovered, d.cardId));
   return { version: 1, discovered, log, muted: data.muted === true };
 }
 
