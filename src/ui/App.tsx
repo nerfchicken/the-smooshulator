@@ -27,18 +27,15 @@ export default function App(): ReactElement {
     setMuted(state.muted);
   }, [state.muted]);
 
-  // WebAudio must be unlocked inside the first trusted gesture.
+  // WebAudio must be unlocked inside a trusted *activation* gesture. A touch
+  // pointerdown is not one (iOS rejects it), so listen for pointerup, click and
+  // keydown, once each: whichever lands first unlocks, the rest re-nudge.
   useEffect(() => {
-    const unlock = (): void => {
-      unlockAudio();
-      document.removeEventListener('pointerdown', unlock);
-      document.removeEventListener('keydown', unlock);
-    };
-    document.addEventListener('pointerdown', unlock, { once: true });
-    document.addEventListener('keydown', unlock, { once: true });
+    const events = ['pointerup', 'click', 'keydown'] as const;
+    const unlock = (): void => unlockAudio();
+    for (const ev of events) document.addEventListener(ev, unlock, { once: true });
     return () => {
-      document.removeEventListener('pointerdown', unlock);
-      document.removeEventListener('keydown', unlock);
+      for (const ev of events) document.removeEventListener(ev, unlock);
     };
   }, []);
 

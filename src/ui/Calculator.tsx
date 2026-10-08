@@ -10,7 +10,7 @@ import {
 import type { Card } from '../engine/types';
 import { combine } from '../engine';
 import { RECIPES } from '../data/recipes';
-import type { Action, State } from '../state/store';
+import { reducer, type Action, type State } from '../state/store';
 import { crunch, discovery, ew, yawn } from '../audio/sounds';
 import { CardView } from './CardView';
 import type { DragonMood } from './Dragon';
@@ -77,14 +77,20 @@ export function Calculator({ state, dispatch, allCards, setMood, overSlot }: Pro
     crunch();
     after(SHAKE_MS, () => {
       const res = combine(x, y, { recipes: RECIPES, cards });
-      const isNew = !latest.current.state.log.some((d) => d.key === res.key);
-      dispatch({ type: 'smooshed', result: res });
+      // The store may swap the result for an already-discovered twin (same word
+      // reached by a different pair) with isNew:false. Run the pure reducer
+      // ahead of dispatch so sound/confetti/mood agree with what will render.
+      const action: Action = { type: 'smooshed', result: res };
+      const next = reducer(latest.current.state, action).result;
+      const shown = next?.card ?? res.card;
+      const isNew = next?.isNew ?? false;
+      dispatch(action);
       setLastInputs([x, y]);
       setPopId((n) => n + 1);
       setShaking(false);
       busy.current = false;
       setCopied(false);
-      const mood = moodFor(res.card, isNew);
+      const mood = moodFor(shown, isNew);
       if (isNew) {
         discovery();
         void fireConfetti();

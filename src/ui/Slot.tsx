@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type Dispatch, type KeyboardEvent, type ReactElement } from 'react';
 import type { Card } from '../engine/types';
 import { cardFromTypedWord } from '../engine';
-import { EMOJI_KEYWORDS } from '../data/emojiMap';
+import { EMOJI_KEYWORDS, WORD_ALIASES } from '../data/emojiMap';
 import type { Action } from '../state/store';
 import { blip } from '../audio/sounds';
 import { CardView } from './CardView';
+
+const REJECT_MS = 400;
 
 type Props = {
   index: 0 | 1;
@@ -24,7 +26,13 @@ type Props = {
 export function Slot({ index, card, hint, knownCards, dispatch, isOver }: Props): ReactElement {
   const [typing, setTyping] = useState(false);
   const [text, setText] = useState('');
+  const [rejected, setRejected] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const shakeTimer = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (shakeTimer.current !== null) window.clearTimeout(shakeTimer.current);
+  }, []);
 
   useEffect(() => {
     if (typing) inputRef.current?.focus();
@@ -38,12 +46,33 @@ export function Slot({ index, card, hint, knownCards, dispatch, isOver }: Props)
     }
   }, [card]);
 
-  const commit = (): void => {
+  /**
+   * Turn the typed text into a card. Nothing usable (punctuation only, etc.)
+   * returns null: on Enter the input shakes and keeps focus so the kid can fix
+   * it; on blur we just close quietly (they walked away).
+   */
+  const commit = (viaBlur = false): void => {
     const value = text.trim();
+    if (!value) {
+      setTyping(false);
+      setText('');
+      return;
+    }
+    const made = cardFromTypedWord(value, EMOJI_KEYWORDS, knownCards, WORD_ALIASES);
+    if (!made) {
+      if (viaBlur) {
+        setTyping(false);
+        setText('');
+        return;
+      }
+      setRejected(true);
+      if (shakeTimer.current !== null) window.clearTimeout(shakeTimer.current);
+      shakeTimer.current = window.setTimeout(() => setRejected(false), REJECT_MS);
+      inputRef.current?.focus();
+      return;
+    }
     setTyping(false);
     setText('');
-    if (!value) return;
-    const made = cardFromTypedWord(value, EMOJI_KEYWORDS, knownCards);
     blip();
     dispatch({ type: 'setSlot', index, card: made });
   };
@@ -95,7 +124,8 @@ export function Slot({ index, card, hint, knownCards, dispatch, isOver }: Props)
       <div className={`slot slot--filled${over}`} data-slot={index}>
         <input
           ref={inputRef}
-          className="slot__input"
+          className={`slot__input${rejected ? ' is-rejected' : ''}`}
+          aria-invalid={rejected || undefined}
           type="text"
           value={text}
           placeholder="type…"
@@ -108,7 +138,7 @@ export function Slot({ index, card, hint, knownCards, dispatch, isOver }: Props)
           maxLength={24}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
-          onBlur={commit}
+          onBlur={() => commit(true)}
         />
       </div>
     );
