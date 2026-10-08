@@ -39,6 +39,24 @@ export default function App(): ReactElement {
     };
   }, []);
 
+  // First run (nothing discovered, nothing in the slots): load the flagship
+  // smoosh so the very first tap is the payoff. Also after "Start over".
+  // Never auto-smooshes; the kid presses the button.
+  const fresh = discoveryCount(state) === 0;
+  useEffect(() => {
+    if (!fresh) return;
+    const [a, b] = state.slots;
+    if (a || b) return;
+    const blanket = BASE_CARDS.find((c) => c.id === 'blanket');
+    const daddy = BASE_CARDS.find((c) => c.id === 'daddy');
+    if (!blanket || !daddy) return;
+    dispatch({ type: 'setSlot', index: 0, card: blanket });
+    dispatch({ type: 'setSlot', index: 1, card: daddy });
+    setMood('think');
+    // Only when the save flips to "fresh"; later slot edits must not refill.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fresh]);
+
   const onDragOver = useCallback((s: 0 | 1 | null) => setOverSlot(s), []);
   const found = discoveryCount(state);
 

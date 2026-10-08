@@ -67,6 +67,8 @@ export function Calculator({ state, dispatch, allCards, setMood, overSlot }: Pro
 
   const armed = a !== null && b !== null;
   const ready = armed && !shaking;
+  // First run: the pre-filled flagship pair is waiting; make the button beg.
+  const pulsing = ready && state.log.length === 0 && state.result === null;
 
   const smoosh = useCallback((): void => {
     const { state: s, allCards: cards } = latest.current;
@@ -168,7 +170,7 @@ export function Calculator({ state, dispatch, allCards, setMood, overSlot }: Pro
   const hintFor = (i: 0 | 1): string => (i === 0 ? 'tap a card' : 'or type a word');
 
   return (
-    <section className={`calc${shaking ? ' is-shaking' : ''}`} aria-label="Calculator">
+    <section className={`calc${shaking ? ' is-shaking' : ''}${armed ? ' is-armed' : ''}`} aria-label="Calculator">
       <div className={`calc__row${shaking ? ' is-slamming' : ''}`}>
         <Slot index={0} card={a} hint={hintFor(0)} knownCards={allCards} dispatch={dispatch} isOver={overSlot === 0} />
         <div className="calc__plus" aria-hidden="true">+</div>
@@ -176,7 +178,7 @@ export function Calculator({ state, dispatch, allCards, setMood, overSlot }: Pro
       </div>
       <button
         type="button"
-        className={`calc__equals${armed ? '' : ' calc__equals--idle'}`}
+        className={`calc__equals${armed ? '' : ' calc__equals--idle'}${pulsing ? ' is-pulsing' : ''}`}
         disabled={!ready}
         onClick={smoosh}
         aria-label="Smoosh them together"

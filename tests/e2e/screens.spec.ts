@@ -38,14 +38,15 @@ test('screens', async ({ page }, testInfo) => {
     await page.screenshot({ path: `tests/e2e/screenshots/${name}-${what}.png` });
   };
 
+  // A fresh save pre-fills the flagship pair (Blanket + Daddy); wait for it so the
+  // home shot shows the real first impression.
+  await expect(page.locator('[data-slot="0"]')).toContainText('Blanket');
+  await expect(page.locator('[data-slot="1"]')).toContainText('Daddy');
   await expect(page.getByTestId('score')).toBeInViewport(fullyVisible);
   await expect(toolbar(page)).toBeInViewport(fullyVisible);
   await expect(page.getByRole('button', { name: 'Mute sounds' })).toBeInViewport(fullyVisible);
   await shot('home');
 
-  const tray = page.getByRole('region', { name: 'Card tray' });
-  await tray.getByRole('button', { name: 'Blanket', exact: true }).click();
-  await tray.getByRole('button', { name: 'Daddy', exact: true }).click();
   await page.getByRole('button', { name: 'Smoosh them together' }).click();
   const resultCard = page.getByTestId('result').locator('.card--xl');
   await expect(resultCard).toBeVisible();

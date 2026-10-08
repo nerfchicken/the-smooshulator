@@ -5,6 +5,17 @@ const card = (page: Page, word: string) =>
 const smoosh = (page: Page) => page.getByRole('button', { name: 'Smoosh them together' });
 const result = (page: Page) => page.getByTestId('result');
 const resultCard = (page: Page) => result(page).locator('.card--xl');
+const slot = (page: Page, i: 0 | 1) => page.locator(`[data-slot="${i}"]`);
+
+/** A brand-new save pre-fills Blanket + Daddy; wait for that, then empty both slots. */
+async function clearSlots(page: Page): Promise<void> {
+  await expect(slot(page, 0)).toContainText('Blanket');
+  await expect(slot(page, 1)).toContainText('Daddy');
+  await page.getByRole('button', { name: 'Clear slot 1' }).click();
+  await page.getByRole('button', { name: 'Clear slot 2' }).click();
+  await expect(slot(page, 0)).toHaveClass(/slot--empty/);
+  await expect(slot(page, 1)).toHaveClass(/slot--empty/);
+}
 
 // One worker per spec file: five parallel headless WebKits (one per worker) all
 // cold-start and contend for CPU, which is what blew the budget before.
@@ -20,7 +31,24 @@ test.beforeEach(async ({ page }, testInfo) => {
   await page.reload();
 });
 
+test('first run pre-fills Blanket + Daddy, arms SMOOSH!, never auto-smooshes', async ({ page }) => {
+  await expect(slot(page, 0)).toContainText('Blanket');
+  await expect(slot(page, 1)).toContainText('Daddy');
+  await expect(smoosh(page)).toBeEnabled();
+  await expect(smoosh(page)).toHaveText(/SMOOSH!/);
+  await expect(smoosh(page)).toHaveClass(/is-pulsing/);
+  await expect(page.locator('.dragon')).toHaveClass(/dragon--think/);
+  await expect(resultCard(page)).toHaveCount(0);
+  await expect(page.getByTestId('score')).toHaveText(/★\s*0$/);
+  // Taking a card out disarms it: dim "pick 2 cards" prompt, still the same button.
+  await page.getByRole('button', { name: 'Clear slot 2' }).click();
+  await expect(smoosh(page)).toBeDisabled();
+  await expect(smoosh(page)).toHaveText('pick 2 cards');
+  await expect(smoosh(page)).not.toHaveClass(/is-pulsing/);
+});
+
 test('tap Cat + Dog, smoosh, result appears and the star count becomes 1', async ({ page }) => {
+  await clearSlots(page);
   await expect(page.getByTestId('score')).toHaveText(/★\s*0$/);
   await expect(smoosh(page)).toBeDisabled();
   await card(page, 'Cat').click();
@@ -52,7 +80,8 @@ test('tap Cat + Dog, smoosh, result appears and the star count becomes 1', async
 });
 
 test('typed word + tray card smooshes', async ({ page }) => {
-  await page.locator('[data-slot="0"]').click();
+  await clearSlots(page);
+  await slot(page, 0).click();
   const input = page.getByRole('textbox', { name: /Type a word for slot 1/ });
   await expect(input).toBeFocused();
   await input.fill('shark');
@@ -84,6 +113,7 @@ test('mute toggles aria-pressed and persists', async ({ page }) => {
 });
 
 test('result card can be smooshed again and slots clear', async ({ page }) => {
+  await clearSlots(page);
   await card(page, 'Cat').click();
   await card(page, 'Dog').click();
   await smoosh(page).click();

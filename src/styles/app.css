@@ -639,6 +639,15 @@ button.slot { appearance: none; padding: 0; margin: 0 auto; font: inherit; color
 /* Mid-smoosh (both slots full, shaking): keep the yellow, just no press. */
 .calc__equals:disabled { cursor: default; }
 .calc__equals:disabled:active { transform: none; box-shadow: 0 6px 0 var(--c-ink), 0 6px 0 3px var(--c-ink), 0 10px 20px rgba(0, 0, 0, 0.5), var(--glow-yellow); }
+/* Both slots full, nothing smooshed yet: the prompt changes to match. */
+.calc.is-armed .calc__result:empty::before { content: 'PRESS SMOOSH!'; }
+/* First run: the flagship pair is pre-loaded, so the button pulses until pressed.
+   Glow/brightness only (no transform) so the press-down still reads. */
+.calc__equals.is-pulsing { animation: pulse-smoosh 1.4s ease-in-out infinite; }
+@keyframes pulse-smoosh {
+  0%, 100% { filter: brightness(1); box-shadow: 0 6px 0 var(--c-ink), 0 6px 0 3px var(--c-ink), 0 10px 20px rgba(0, 0, 0, 0.5), var(--glow-yellow); }
+  50% { filter: brightness(1.18); box-shadow: 0 6px 0 var(--c-ink), 0 6px 0 3px var(--c-ink), 0 10px 20px rgba(0, 0, 0, 0.5), 0 0 14px var(--c-yellow), 0 0 40px rgba(255, 217, 59, 0.8); }
+}
 /* Fewer than two cards: a quiet outlined prompt, not a broken-looking slab. */
 .calc__equals--idle,
 .calc__equals--idle:hover,
@@ -766,4 +775,5 @@ button.slot { appearance: none; padding: 0; margin: 0 auto; font: inherit; color
 body:has(.modal) .dragon,
 body:has(.modal) .dragon .blink,
 body:has(.modal) .calc__result:empty::before,
+body:has(.modal) .calc__equals.is-pulsing,
 body:has(.modal) .card--new::after { animation-play-state: paused; }
