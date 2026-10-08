@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Smooshulator — static mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:ital,wght@0,600;0,700;0,800;0,900;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../src/styles/tokens.css">
+<link rel="stylesheet" href="../src/styles/app.css">
+<style>
+  /* mockup-only: states gallery below the app */
+  .mock-gallery { max-width: 1100px; margin: 0 auto; padding: var(--sp-6) var(--sp-3) var(--sp-10); display: flex; flex-direction: column; gap: var(--sp-5); }
+  .mock-gallery h2 { margin: 0; font-family: var(--font-display); font-size: var(--fs-display-sm); color: var(--c-lime); text-shadow: var(--glow-lime); }
+  .mock-row { display: flex; flex-wrap: wrap; gap: var(--sp-5); align-items: center; }
+  .mock-row .slot { width: 116px; margin: 0; }
+  .mock-row figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); font-size: var(--fs-xs); color: var(--c-text-dim); font-weight: 700; }
+  .mock-gallery .modal { position: relative; inset: auto; padding: 0; }
+  .mock-gallery .modal__backdrop { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app__header">
+    <div class="dragon dragon--idle" aria-hidden="true">
+      <!-- static copy of DragonSvg mood="idle" -->
+      <svg viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Smoosh the dragon, feeling idle">
+        <g stroke="#10102a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M22 70 L4 48 L20 54 L14 36 L34 56 Z" fill="#5e36c9"/>
+          <path d="M98 70 L116 48 L100 54 L106 36 L86 56 Z" fill="#5e36c9"/>
+          <path d="M90 96 C106 98 112 86 104 80 C100 90 92 88 92 86" fill="#8a5cff"/>
+          <path d="M103 79 L112 72 L110 84 Z" fill="#28f2ff"/>
+          <ellipse cx="60" cy="92" rx="34" ry="22" fill="#8a5cff"/>
+          <ellipse cx="60" cy="96" rx="20" ry="13" fill="#9dff3a" stroke-width="2.5"/>
+          <path d="M48 96 H72 M50 102 H70" stroke="#5bb800" stroke-width="2.5"/>
+          <ellipse cx="38" cy="110" rx="10" ry="6" fill="#8a5cff"/>
+          <ellipse cx="82" cy="110" rx="10" ry="6" fill="#8a5cff"/>
+          <path d="M30 46 L24 32 L40 40 Z M44 36 L44 20 L56 34 Z M64 34 L72 20 L76 36 Z M80 40 L94 32 L88 46 Z" fill="#28f2ff"/>
+          <path d="M34 42 L26 22 L44 36 Z" fill="#ffd93b"/>
+          <path d="M86 42 L94 22 L76 36 Z" fill="#ffd93b"/>
+          <rect x="22" y="30" width="76" height="56" rx="26" fill="#8a5cff"/>
+          <rect x="40" y="56" width="40" height="24" rx="12" fill="#a98bff" stroke-width="2.5"/>
+        </g>
+        <circle cx="52" cy="64" r="2.4" fill="#10102a"/><circle cx="68" cy="64" r="2.4" fill="#10102a"/>
+        <circle cx="30" cy="62" r="5" fill="#ff4fd8" opacity="0.85"/><circle cx="90" cy="62" r="5" fill="#ff4fd8" opacity="0.85"/>
+        <g stroke="#10102a" stroke-width="3">
+          <circle cx="44" cy="50" r="8.5" fill="#fff"/><circle cx="76" cy="50" r="8.5" fill="#fff"/>
+        </g>
+        <circle cx="44" cy="50" r="3.8" fill="#10102a"/><circle cx="76" cy="50" r="3.8" fill="#10102a"/>
+        <circle cx="46" cy="48" r="1.6" fill="#fff"/><circle cx="78" cy="48" r="1.6" fill="#fff"/>
+        <rect class="blink" x="34.5" y="40.5" width="19" height="19" rx="8.5" fill="#8a5cff"/>
+        <rect class="blink" x="66.5" y="40.5" width="19" height="19" rx="8.5" fill="#8a5cff"/>
+        <path d="M50 73 Q60 80 70 73" fill="none" stroke="#10102a" stroke-width="3" stroke-linecap="round"/>
+        <path d="M54 73 L56 77 L58 73 M62 73 L64 77 L66 73" fill="#fff" stroke="#10102a" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1 class="title"><span class="title__the">The</span><span class="title__name">Smooshulator</span></h1>
+    <div class="score" aria-label="12 discoveries">★ 12</div>
+  </header>
+
+  <section class="calc" aria-label="Calculator">
+    <div class="calc__row">
+      <div class="slot slot--filled">
+        <button class="card card--lg" type="button">
+          <span class="card__emoji">🛏️</span>
+          <span class="card__word">Blanket</span>
+        </button>
+        <button class="slot__clear" type="button" aria-label="Clear slot 1">×</button>
+      </div>
+      <div class="calc__plus" aria-hidden="true">+</div>
+      <div class="slot slot--filled">
+        <button class="card card--lg" type="button">
+          <span class="card__emoji">👨</span>
+          <span class="card__word">Daddy</span>
+        </button>
+        <button class="slot__clear" type="button" aria-label="Clear slot 2">×</button>
+      </div>
+    </div>
+    <button class="calc__equals" type="button">= SMOOSH!</button>
+    <div class="calc__result">
+      <button class="card card--xl card--new is-popping" type="button">
+        <span class="card__emoji card__emoji--duo"><span>🛏️</span><span>👨</span></span>
+        <span class="card__word">Snuggle Daddy</span>
+        <span class="card__flavor">Warm. Snoring. 10/10 would nap again.</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="tray" aria-label="Card tray">
+    <button class="card" type="button"><span class="card__emoji">🐱</span><span class="card__word">Cat</span></button>
+    <button class="card card--selected" type="button"><span class="card__emoji">🐶</span><span class="card__word">Dog</span></button>
+    <button class="card" type="button"><span class="card__emoji">🍕</span><span class="card__word">Pizza</span></button>
+    <button class="card" type="button"><span class="card__emoji">🐉</span><span class="card__word">Dragon</span></button>
+    <button class="card" type="button"><span class="card__emoji">💩</span><span class="card__word">Poop</span></button>
+    <button class="card" type="button"><span class="card__emoji">🪥</span><span class="card__word">Toothbrush</span></button>
+    <button class="card" type="button"><span class="card__emoji">🦄</span><span class="card__word">Unicorn</span></button>
+    <button class="card" type="button"><span class="card__emoji">🌈</span><span class="card__word">Rainbow</span></button>
+    <button class="card" type="button"><span class="card__emoji">🤖</span><span class="card__word">Robot</span></button>
+    <button class="card" type="button"><span class="card__emoji">🌙</span><span class="card__word">Moon</span></button>
+    <button class="card" type="button"><span class="card__emoji">🧦</span><span class="card__word">Sock</span></button>
+    <button class="card" type="button"><span class="card__emoji">🍪</span><span class="card__word">Cookie</span></button>
+    <button class="card" type="button"><span class="card__emoji">🧀</span><span class="card__word">Cheese</span></button>
+    <button class="card" type="button"><span class="card__emoji">🐸</span><span class="card__word">Frog</span></button>
+    <button class="card" type="button"><span class="card__emoji">🥒</span><span class="card__word">Pickle</span></button>
+    <button class="card" type="button"><span class="card__emoji">👻</span><span class="card__word">Ghost</span></button>
+    <button class="card card--new" type="button"><span class="card__emoji card__emoji--duo"><span>🛏️</span><span>👨</span></span><span class="card__word">Snuggle Daddy</span></button>
+  </section>
+
+  <nav class="tray__toolbar" aria-label="Tools">
+    <button class="btn btn--primary" type="button"><span class="btn__emoji">📖</span> Smooshopedia</button>
+    <button class="btn" type="button"><span class="btn__emoji">🔀</span> Random</button>
+    <button class="btn btn--ghost btn--icon" type="button" aria-label="Mute">🔊</button>
+  </nav>
+</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="dragon-body" viewBox="0 0 120 120">
+      <g stroke="#10102a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M22 70 L4 48 L20 54 L14 36 L34 56 Z" fill="#5e36c9"/><path d="M98 70 L116 48 L100 54 L106 36 L86 56 Z" fill="#5e36c9"/>
+        <path d="M90 96 C106 98 112 86 104 80 C100 90 92 88 92 86" fill="#8a5cff"/><path d="M103 79 L112 72 L110 84 Z" fill="#28f2ff"/>
+        <ellipse cx="60" cy="92" rx="34" ry="22" fill="#8a5cff"/><ellipse cx="60" cy="96" rx="20" ry="13" fill="#9dff3a" stroke-width="2.5"/>
+        <path d="M48 96 H72 M50 102 H70" stroke="#5bb800" stroke-width="2.5"/>
+        <ellipse cx="38" cy="110" rx="10" ry="6" fill="#8a5cff"/><ellipse cx="82" cy="110" rx="10" ry="6" fill="#8a5cff"/>
+        <path d="M30 46 L24 32 L40 40 Z M44 36 L44 20 L56 34 Z M64 34 L72 20 L76 36 Z M80 40 L94 32 L88 46 Z" fill="#28f2ff"/>
+        <path d="M34 42 L26 22 L44 36 Z" fill="#ffd93b"/><path d="M86 42 L94 22 L76 36 Z" fill="#ffd93b"/>
+        <rect x="22" y="30" width="76" height="56" rx="26" fill="#8a5cff"/><rect x="40" y="56" width="40" height="24" rx="12" fill="#a98bff" stroke-width="2.5"/>
+      </g>
+      <circle cx="52" cy="64" r="2.4" fill="#10102a"/><circle cx="68" cy="64" r="2.4" fill="#10102a"/>
+      <circle cx="30" cy="62" r="5" fill="#ff4fd8" opacity="0.85"/><circle cx="90" cy="62" r="5" fill="#ff4fd8" opacity="0.85"/>
+    </symbol>
+    <symbol id="dragon-eyes" viewBox="0 0 120 120">
+      <g stroke="#10102a" stroke-width="3"><circle cx="44" cy="50" r="8.5" fill="#fff"/><circle cx="76" cy="50" r="8.5" fill="#fff"/></g>
+    </symbol>
+    <symbol id="dragon-teeth" viewBox="0 0 120 120">
+      <path d="M54 73 L56 77 L58 73 M62 73 L64 77 L66 73" fill="#fff" stroke="#10102a" stroke-width="1.5" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<section class="mock-gallery" aria-label="Component states (mockup only)">
+  <h2>Slot states</h2>
+  <div class="mock-row">
+    <figure><div class="slot slot--empty"></div><figcaption>.slot--empty</figcaption></figure>
+    <figure><div class="slot slot--empty" data-hint="or type a word"></div><figcaption>.slot--empty[data-hint]</figcaption></figure>
+    <figure><div class="slot slot--filled"><input class="slot__input" value="Pickle" aria-label="Type a word"></div><figcaption>.slot__input</figcaption></figure>
+    <figure><div class="slot slot--filled"><input class="slot__input" placeholder="type…" aria-label="Type a word"></div><figcaption>.slot__input placeholder</figcaption></figure>
+    <figure><button class="card card--lg" type="button"><span class="card__emoji card__emoji--duo"><span>🪥</span><span>🐉</span></span><span class="card__word">Fire-Breathing Flosser</span></button><figcaption>.card--lg long name</figcaption></figure>
+  </div>
+  <h2>Empty result hint</h2>
+  <div class="mock-row"><figure><div class="calc" style="width:300px"><div class="calc__result"></div></div><figcaption>.calc__result:empty</figcaption></figure></div>
+
+  <h2>Dragon moods</h2>
+  <div class="mock-row">
+    <figure><div class="dragon dragon--idle"><svg viewBox="0 0 120 120"><use href="#dragon-body"/><use href="#dragon-eyes"/>
+      <circle cx="44" cy="50" r="3.8" fill="#10102a"/><circle cx="76" cy="50" r="3.8" fill="#10102a"/><circle cx="46" cy="48" r="1.6" fill="#fff"/><circle cx="78" cy="48" r="1.6" fill="#fff"/>
+      <path d="M50 73 Q60 80 70 73" fill="none" stroke="#10102a" stroke-width="3" stroke-linecap="round"/><use href="#dragon-teeth"/></svg></div><figcaption>idle</figcaption></figure>
+    <figure><div class="dragon dragon--think"><svg viewBox="0 0 120 120"><use href="#dragon-body"/><use href="#dragon-eyes"/>
+      <circle cx="42" cy="46" r="3.8" fill="#10102a"/><circle cx="74" cy="46" r="3.8" fill="#10102a"/><circle cx="44" cy="44" r="1.6" fill="#fff"/><circle cx="76" cy="44" r="1.6" fill="#fff"/>
+      <path d="M48 75 Q52 71 56 75 Q60 79 64 75 Q68 71 72 75" fill="none" stroke="#10102a" stroke-width="3" stroke-linecap="round"/><use href="#dragon-teeth"/></svg></div><figcaption>think</figcaption></figure>
+    <figure><div class="dragon dragon--wow"><svg viewBox="0 0 120 120"><use href="#dragon-body"/>
+      <g stroke="#10102a" stroke-width="3"><circle cx="44" cy="50" r="11" fill="#fff"/><circle cx="76" cy="50" r="11" fill="#fff"/></g>
+      <circle cx="44" cy="50" r="5.5" fill="#10102a"/><circle cx="76" cy="50" r="5.5" fill="#10102a"/><circle cx="46" cy="48" r="1.6" fill="#fff"/><circle cx="78" cy="48" r="1.6" fill="#fff"/>
+      <ellipse cx="60" cy="75" rx="9" ry="7" fill="#10102a"/><ellipse cx="60" cy="79" rx="5" ry="3" fill="#ff4fd8"/>
+      <path d="M60 86 C54 92 56 100 60 104 C64 100 66 92 60 86 Z" fill="#ff8a3d" stroke="#10102a" stroke-width="2"/><path d="M60 92 C58 95 59 99 60 101 C61 99 62 95 60 92 Z" fill="#ffd93b"/></svg></div><figcaption>wow</figcaption></figure>
+    <figure><div class="dragon dragon--ew"><svg viewBox="0 0 120 120"><use href="#dragon-body"/>
+      <g fill="none" stroke="#10102a" stroke-width="3" stroke-linecap="round"><path d="M34 48 L50 52 M34 56 L50 52"/><path d="M86 48 L70 52 M86 56 L70 52"/><path d="M50 76 Q60 70 70 76"/></g>
+      <rect x="55" y="73" width="10" height="14" rx="5" fill="#ff4fd8" stroke="#10102a" stroke-width="2.5"/></svg></div><figcaption>ew</figcaption></figure>
+    <figure><div class="dragon dragon--sleepy"><svg viewBox="0 0 120 120"><use href="#dragon-body"/>
+      <g fill="none" stroke="#10102a" stroke-width="3" stroke-linecap="round"><path d="M36 50 Q44 56 52 50"/><path d="M68 50 Q76 56 84 50"/><path d="M54 75 Q60 78 66 75"/></g>
+      <text x="96" y="30" font-family="Nunito, system-ui, sans-serif" font-weight="900" font-size="14" fill="#28f2ff" stroke="#10102a" stroke-width="0.8">z</text>
+      <text x="104" y="18" font-family="Nunito, system-ui, sans-serif" font-weight="900" font-size="18" fill="#28f2ff" stroke="#10102a" stroke-width="0.8">Z</text><use href="#dragon-teeth"/></svg></div><figcaption>sleepy</figcaption></figure>
+  </div>
+
+  <h2>Smooshopedia modal</h2>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pedia-title">
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel">
+      <h2 class="modal__title" id="pedia-title">📖 Smooshopedia · 12 / 250</h2>
+      <div class="modal__grid">
+        <div class="pedia__entry"><button class="card" type="button"><span class="card__emoji card__emoji--duo"><span>🛏️</span><span>👨</span></span><span class="card__word">Snuggle Daddy</span></button><div class="pedia__recipe"><span class="emoji">🛏️</span> Blanket + <span class="emoji">👨</span> Daddy</div></div>
+        <div class="pedia__entry"><button class="card" type="button"><span class="card__emoji card__emoji--duo"><span>🪥</span><span>🐉</span></span><span class="card__word">Fire-Breathing Flosser</span></button><div class="pedia__recipe">Toothbrush + Dragon</div></div>
+        <div class="pedia__entry"><button class="card" type="button"><span class="card__emoji card__emoji--duo"><span>💩</span><span>🌈</span></span><span class="card__word">Rainbow Poop</span></button><div class="pedia__recipe">Poop + Rainbow</div></div>
+        <div class="pedia__entry"><button class="card" type="button"><span class="card__emoji card__emoji--duo"><span>🐱</span><span>🐱</span></span><span class="card__word">Double Cat</span></button><div class="pedia__recipe">Cat + Cat</div></div>
+        <div class="pedia__entry"><button class="card" type="button"><span class="card__emoji card__emoji--duo"><span>🧦</span><span>🧀</span></span><span class="card__word">Stinky Cheese</span></button><div class="pedia__recipe">Sock + Cheese</div></div>
+        <div class="pedia__entry"><button class="card" type="button"><span class="card__emoji card__emoji--duo"><span>👻</span><span>🍕</span></span><span class="card__word">Boo-za Pizza</span></button><div class="pedia__recipe">Ghost + Pizza</div></div>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn--ghost" type="button">Start over</button>
+        <button class="btn btn--primary" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,84 @@
+/* The Smooshulator — design tokens
+   Retro arcade: neon on deep navy, cream card faces, hard offset shadows. */
+:root {
+  /* ---- Palette: backgrounds & bezels ---- */
+  --c-bg: #0b0b1f;            /* deep navy-black page */
+  --c-bg-2: #141433;          /* raised panels / modal */
+  --c-bezel: #1f1f3f;         /* calculator body */
+  --c-bezel-edge: #2e2e5c;    /* bezel highlight */
+  --c-screen: #06101c;        /* CRT screen behind the slots */
+  --c-ink: #10102a;           /* dark outlines, card borders, shadows */
+
+  /* ---- Palette: neons ---- */
+  --c-pink: #ff4fd8;
+  --c-pink-deep: #c21e9e;
+  --c-cyan: #28f2ff;
+  --c-cyan-deep: #0aa8c4;
+  --c-yellow: #ffd93b;
+  --c-yellow-deep: #d99a00;
+  --c-lime: #9dff3a;
+  --c-lime-deep: #5bb800;
+  --c-purple: #8a5cff;        /* dragon body */
+  --c-orange: #ff8a3d;        /* dragon flame */
+
+  /* ---- Palette: card faces & text ---- */
+  --c-cream: #fff6dc;         /* card face: emoji + words stay legible */
+  --c-cream-2: #ffe9b0;       /* card face accent band */
+  --c-text: #f4f2ff;          /* body text on dark */
+  --c-text-dim: #a8a6c8;      /* hints, captions */
+  --c-text-ink: var(--c-ink); /* text on cream */
+
+  /* ---- Spacing scale (4px base) ---- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px; --sp-12: 48px;
+
+  /* ---- Radii & borders ---- */
+  --r-sm: 6px;  --r-md: 12px; --r-lg: 18px; --r-xl: 28px; --r-pill: 999px;
+  --bw-1: 2px;  --bw-2: 3px;  --bw-3: 4px;  --bw-4: 6px;
+
+  /* ---- Shadows: hard offset (cards) and neon glow (screen, buttons) ---- */
+  --sh-hard: 4px 4px 0 var(--c-ink);
+  --sh-hard-lg: 6px 6px 0 var(--c-ink);
+  --sh-hard-sm: 2px 2px 0 var(--c-ink);
+  --sh-press: 1px 1px 0 var(--c-ink);
+  --glow-pink: 0 0 8px var(--c-pink), 0 0 24px rgba(255, 79, 216, 0.45);
+  --glow-cyan: 0 0 8px var(--c-cyan), 0 0 24px rgba(40, 242, 255, 0.4);
+  --glow-yellow: 0 0 8px var(--c-yellow), 0 0 24px rgba(255, 217, 59, 0.45);
+  --glow-lime: 0 0 8px var(--c-lime), 0 0 20px rgba(157, 255, 58, 0.4);
+  --glow-text-pink: 0 0 8px rgba(255, 79, 216, 0.9), 0 0 22px rgba(255, 79, 216, 0.5), 2px 2px 0 var(--c-pink-deep);
+  --glow-text-cyan: 0 0 8px rgba(40, 242, 255, 0.9), 0 0 22px rgba(40, 242, 255, 0.5), 2px 2px 0 var(--c-cyan-deep);
+
+  /* ---- Typography ---- */
+  --font-display: 'Press Start 2P', monospace;
+  --font-body: 'Nunito', system-ui, sans-serif;
+  --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  --fs-xs: 0.75rem; --fs-sm: 0.875rem; --fs-md: 1rem; --fs-lg: 1.25rem;
+  --fs-xl: 1.6rem;  --fs-2xl: 2.2rem;  --fs-3xl: 3rem;
+  --fs-display-sm: 0.7rem;  /* Press Start 2P runs big; keep these small */
+  --fs-display-md: 0.95rem;
+  --fs-display-lg: 1.35rem;
+
+  /* ---- Sizes ---- */
+  --touch: 56px;              /* minimum tap target */
+  --card-w: 96px;  --card-h: 120px;
+  --card-w-lg: 116px; --card-h-lg: 145px;
+  --card-w-xl: 200px; --card-h-xl: 220px;
+  --dragon: 72px;             /* mascot box on phones; app.css bumps on desktop */
+
+  /* ---- Motion ---- */
+  --d-fast: 120ms; --d-med: 240ms; --d-slow: 480ms; --d-idle: 2.8s;
+  --ease-boing: cubic-bezier(0.34, 1.56, 0.64, 1);   /* overshoot squash */
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---- Layers ---- */
+  --z-ghost: 50; --z-modal: 100;
+}
+
+/* Reduced motion: zero every duration so transitions/animations collapse. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 0ms; --d-med: 0ms; --d-slow: 0ms; --d-idle: 0ms;
+    --ease-boing: linear; --ease-snap: linear; --ease-out: linear;
+  }
+}

@@ -1,7 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Placeholder icon: neon "=" on a dark arcade-screen tile. Safe to replace. -->
-  <rect width="512" height="512" rx="96" fill="#0b0a1a"/>
-  <rect x="24" y="24" width="464" height="464" rx="80" fill="none" stroke="#ff4fd8" stroke-width="16"/>
-  <rect x="112" y="176" width="288" height="56" rx="12" fill="#39f2ff"/>
-  <rect x="112" y="280" width="288" height="56" rx="12" fill="#ffe84f"/>
+  <defs>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1545"/>
+      <stop offset="1" stop-color="#0b0b1f"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="26" y="26" width="460" height="460" rx="96" fill="none" stroke="#28f2ff" stroke-width="12" opacity="0.9" filter="url(#glow)"/>
+  <!-- scanlines -->
+  <g opacity="0.08" fill="#fff">
+    <rect x="0" y="40" width="512" height="6"/><rect x="0" y="76" width="512" height="6"/><rect x="0" y="112" width="512" height="6"/>
+    <rect x="0" y="148" width="512" height="6"/><rect x="0" y="184" width="512" height="6"/><rect x="0" y="220" width="512" height="6"/>
+    <rect x="0" y="256" width="512" height="6"/><rect x="0" y="292" width="512" height="6"/><rect x="0" y="328" width="512" height="6"/>
+    <rect x="0" y="364" width="512" height="6"/><rect x="0" y="400" width="512" height="6"/><rect x="0" y="436" width="512" height="6"/>
+  </g>
+  <!-- dragon face -->
+  <g stroke="#10102a" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 170 L110 90 L200 150 Z" fill="#ffd93b"/>
+    <path d="M362 170 L402 90 L312 150 Z" fill="#ffd93b"/>
+    <path d="M200 140 L214 84 L250 138 Z M262 138 L298 84 L312 140 Z" fill="#28f2ff"/>
+    <rect x="96" y="130" width="320" height="250" rx="110" fill="#8a5cff"/>
+    <rect x="166" y="262" width="180" height="96" rx="48" fill="#a98bff" stroke-width="10"/>
+    <circle cx="188" cy="226" r="44" fill="#fff"/>
+    <circle cx="324" cy="226" r="44" fill="#fff"/>
+  </g>
+  <circle cx="196" cy="230" r="22" fill="#10102a"/>
+  <circle cx="332" cy="230" r="22" fill="#10102a"/>
+  <circle cx="204" cy="220" r="7" fill="#fff"/>
+  <circle cx="340" cy="220" r="7" fill="#fff"/>
+  <circle cx="220" cy="296" r="10" fill="#10102a"/>
+  <circle cx="292" cy="296" r="10" fill="#10102a"/>
+  <path d="M212 336 Q256 366 300 336" fill="none" stroke="#10102a" stroke-width="14" stroke-linecap="round"/>
+  <path d="M230 336 L240 352 L250 336 M262 336 L272 352 L282 336" fill="#fff" stroke="#10102a" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="124" cy="286" r="20" fill="#ff4fd8" opacity="0.85"/>
+  <circle cx="388" cy="286" r="20" fill="#ff4fd8" opacity="0.85"/>
+  <!-- neon equals badge -->
+  <g filter="url(#glow)">
+    <rect x="330" y="372" width="140" height="110" rx="28" fill="#0b0b1f" stroke="#ff4fd8" stroke-width="10"/>
+    <rect x="360" y="400" width="80" height="18" rx="6" fill="#ff4fd8"/>
+    <rect x="360" y="436" width="80" height="18" rx="6" fill="#ff4fd8"/>
+  </g>
 </svg>
