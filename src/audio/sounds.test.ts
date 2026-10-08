@@ -112,6 +112,32 @@ describe('sounds (node smoke)', () => {
     expect(m.isMuted()).toBe(false);
   });
 
+  it.each(['suspended', 'interrupted'])('play() nudges resume() from the %s state (iOS after a call/Siri)', async (state) => {
+    // 'interrupted' is iOS-only and missing from the TS lib's AudioContextState.
+    const fake = fakeAudioContext(state as AudioContextState);
+    g.window = {
+      AudioContext: function () {
+        return fake;
+      },
+    };
+    const m = await freshModule();
+    m.blip();
+    expect(fake.resume).toHaveBeenCalledTimes(1);
+    expect(fake.createOscillator).toHaveBeenCalled();
+  });
+
+  it('play() does not call resume() when already running', async () => {
+    const fake = fakeAudioContext('running');
+    g.window = {
+      AudioContext: function () {
+        return fake;
+      },
+    };
+    const m = await freshModule();
+    m.blip();
+    expect(fake.resume).not.toHaveBeenCalled();
+  });
+
   it('keeps every gain at or below 0.25 at the destination', async () => {
     const fake = fakeAudioContext();
     g.window = {

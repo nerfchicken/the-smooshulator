@@ -2,9 +2,14 @@
  * Hand-rolled WebAudio sound effects for The Smooshulator. No audio files, no deps.
  *
  * Usage from the UI:
- *   - Call `unlockAudio()` synchronously inside the first trusted user gesture
- *     (e.g. a `pointerdown` listener on `document`, registered with `{ once: true }`).
- *     iOS keeps the AudioContext suspended until `resume()` runs inside a gesture.
+ *   - Call `unlockAudio()` synchronously inside the first trusted user gesture.
+ *     Register it on `document` for `pointerup`, `click` and `keydown` (with
+ *     `{ once: true }` semantics per event). Note `pointerdown` from a touch
+ *     pointer is NOT an activation-triggering event per the HTML spec, so a
+ *     `pointerdown`-only unlock can be rejected on iOS.
+ *     iOS keeps the AudioContext suspended until `resume()` runs inside a gesture,
+ *     and flips it to the non-standard `'interrupted'` state after a phone call,
+ *     Siri or an app switch; both are nudged back with `resume()`.
  *   - Then call `blip()`, `crunch()`, `discovery()`, `ew()`, `yawn()` freely.
  *
  * Every export is a no-op (never throws) when `window`/`AudioContext` are
@@ -63,18 +68,30 @@ function hookVisibility(): void {
 }
 
 /**
+ * True when the context needs a `resume()` nudge: the standard `'suspended'`
+ * state, or iOS's `'interrupted'` (absent from the TS lib's AudioContextState).
+ */
+function needsResume(c: AudioContext): boolean {
+  const state = c.state as string;
+  return state === 'suspended' || state === 'interrupted';
+}
+
+function nudge(c: AudioContext): void {
+  try {
+    if (needsResume(c)) void c.resume().catch(() => undefined);
+  } catch {
+    // ignore
+  }
+}
+
+/**
  * Create (if needed) and resume the AudioContext. Must run synchronously inside a
- * trusted user gesture the first time (pointerdown / touchend / click / keydown).
+ * trusted user gesture the first time (pointerup / touchend / click / keydown).
  * Safe to call repeatedly.
  */
 export function unlockAudio(): void {
   const c = getContext();
-  if (!c) return;
-  try {
-    if (c.state !== 'running') void c.resume().catch(() => undefined);
-  } catch {
-    // ignore
-  }
+  if (c) nudge(c);
 }
 
 /** Run a synth voice against a live context; swallow every failure. */
@@ -83,9 +100,10 @@ function play(fn: (c: AudioContext, out: AudioNode, t0: number) => void): void {
   const c = getContext();
   if (!c || !master) return;
   try {
-    // If we are suspended (no gesture yet), nudge resume; scheduled nodes will
-    // sound once it starts, or be dropped harmlessly if it never does.
-    if (c.state === 'suspended') void c.resume().catch(() => undefined);
+    // If we are suspended (no gesture yet) or interrupted (iOS, after a call),
+    // nudge resume; scheduled nodes will sound once it starts, or be dropped
+    // harmlessly if it never does.
+    nudge(c);
     fn(c, master, c.currentTime);
   } catch {
     // Never let a sound effect break the game.
