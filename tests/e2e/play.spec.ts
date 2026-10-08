@@ -39,7 +39,8 @@ test('tap Cat + Dog, smoosh, result appears and the star count becomes 1', async
   await page.getByRole('button', { name: /Smooshopedia/ }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('heading')).toContainText('1 /');
+  await expect(dialog.getByRole('heading')).toHaveText(/Smooshopedia/);
+  await expect(dialog.getByTestId('pedia-count')).toHaveText(/^1 of \d+$/);
   await expect(dialog.locator('.pedia__entry')).toHaveCount(1);
   await expect(dialog.locator('.pedia__entry .card__word')).toHaveText(word);
   await expect(dialog.locator('.pedia__recipe')).toContainText('Cat');

@@ -72,12 +72,14 @@ export function Smooshopedia({ state, dispatch, allCards, fallbackFocus }: Props
     <div className="modal" role="dialog" aria-modal="true" aria-labelledby="pedia-title">
       <div className="modal__backdrop" onClick={close} data-testid="pedia-backdrop" />
       <div className="modal__panel">
-        <h2 className="modal__title" id="pedia-title">
-          <span>📖 Smooshopedia</span>
-          <span className="modal__count">
-            {state.log.length} / {RECIPES.length}
+        <div className="modal__head">
+          <h2 className="modal__title" id="pedia-title">
+            <span className="modal__title-emoji" aria-hidden="true">📖</span> Smooshopedia
+          </h2>
+          <span className="modal__count" data-testid="pedia-count" aria-label={`${state.log.length} of ${RECIPES.length} found`}>
+            {state.log.length} of {RECIPES.length}
           </span>
-        </h2>
+        </div>
         <div className="modal__grid">
           {entries.length === 0 && (
             <p className="pedia__empty">Nothing yet! Smoosh two cards together to fill this up.</p>
