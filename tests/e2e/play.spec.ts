@@ -17,15 +17,7 @@ async function clearSlots(page: Page): Promise<void> {
   await expect(slot(page, 1)).toHaveClass(/slot--empty/);
 }
 
-// One worker per spec file: five parallel headless WebKits (one per worker) all
-// cold-start and contend for CPU, which is what blew the budget before.
-test.describe.configure({ mode: 'default' });
-
-test.beforeEach(async ({ page }, testInfo) => {
-  // Headless WebKit (phone) is software-rendered in Docker and pays a multi-second
-  // first-paint stall per fresh browser; with parallel workers that eats the
-  // default 30s budget. Triple it for the phone project.
-  if (testInfo.project.name === 'phone') testInfo.slow();
+test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();

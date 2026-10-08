@@ -8,6 +8,9 @@ export default defineConfig({
   outputDir: 'test-results',
   snapshotDir: 'tests/e2e/screenshots',
   fullyParallel: true,
+  // Headless browsers are software-rendered in Docker: more than two at once
+  // just contend for CPU and blow the per-test budget.
+  workers: 2,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
@@ -25,6 +28,8 @@ export default defineConfig({
     {
       name: 'phone',
       use: { ...devices['iPhone 13'] },
+      // Headless WebKit pays a multi-second first-paint stall per fresh context.
+      timeout: 60_000,
     },
     {
       name: 'desktop',

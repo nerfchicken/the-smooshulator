@@ -16,16 +16,10 @@ async function settle(page: Page): Promise<void> {
   );
 }
 
-// One worker per spec file: five parallel headless WebKits (one per worker) all
-// cold-start and contend for CPU, which is what blew the budget before.
-test.describe.configure({ mode: 'default' });
-
 const fullyVisible = { ratio: 1 } as const;
 const toolbar = (page: Page) => page.getByRole('navigation', { name: 'Tools' });
 
-test.beforeEach(async ({ page }, testInfo) => {
-  // Headless WebKit (phone) is software-rendered in Docker: give it room.
-  if (testInfo.project.name === 'phone') testInfo.slow();
+test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
