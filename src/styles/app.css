@@ -635,8 +635,27 @@ button.slot { appearance: none; padding: 0; margin: 0 auto; font: inherit; color
 .result__actions { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; justify-content: center; }
 .result__hint { font-weight: 800; font-size: var(--fs-sm); color: var(--c-text-dim); }
 .btn--sm { min-height: 40px; padding: var(--sp-1) var(--sp-3); font-size: 0.6rem; border-radius: var(--r-sm); }
-.calc__equals:disabled { cursor: not-allowed; filter: saturate(0.35) brightness(0.7); box-shadow: 0 6px 0 var(--c-ink), 0 6px 0 3px var(--c-ink); }
-.calc__equals:disabled:active { transform: none; }
+/* Mid-smoosh (both slots full, shaking): keep the yellow, just no press. */
+.calc__equals:disabled { cursor: default; }
+.calc__equals:disabled:active { transform: none; box-shadow: 0 6px 0 var(--c-ink), 0 6px 0 3px var(--c-ink), 0 10px 20px rgba(0, 0, 0, 0.5), var(--glow-yellow); }
+/* Fewer than two cards: a quiet outlined prompt, not a broken-looking slab. */
+.calc__equals--idle,
+.calc__equals--idle:hover,
+.calc__equals--idle:active {
+  cursor: not-allowed;
+  background: rgba(40, 242, 255, 0.04);
+  border: var(--bw-2) dashed var(--c-cyan-deep);
+  color: var(--c-cyan);
+  opacity: 0.75;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--fs-md);
+  text-transform: none;
+  text-shadow: none;
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}
 .pedia__empty { grid-column: 1 / -1; margin: var(--sp-4) 0; text-align: center; font-weight: 700; color: var(--c-text-dim); }
 
 /* ===== Phone fit (UI pass) =====

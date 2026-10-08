@@ -65,7 +65,8 @@ export function Calculator({ state, dispatch, allCards, setMood, overSlot }: Pro
     timers.current.push(window.setTimeout(fn, ms));
   };
 
-  const ready = a !== null && b !== null && !shaking;
+  const armed = a !== null && b !== null;
+  const ready = armed && !shaking;
 
   const smoosh = useCallback((): void => {
     const { state: s, allCards: cards } = latest.current;
@@ -173,8 +174,14 @@ export function Calculator({ state, dispatch, allCards, setMood, overSlot }: Pro
         <div className="calc__plus" aria-hidden="true">+</div>
         <Slot index={1} card={b} hint={hintFor(1)} knownCards={allCards} dispatch={dispatch} isOver={overSlot === 1} />
       </div>
-      <button type="button" className="calc__equals" disabled={!ready} onClick={smoosh} aria-label="Smoosh them together">
-        = SMOOSH!
+      <button
+        type="button"
+        className={`calc__equals${armed ? '' : ' calc__equals--idle'}`}
+        disabled={!ready}
+        onClick={smoosh}
+        aria-label="Smoosh them together"
+      >
+        {armed ? '= SMOOSH!' : 'pick 2 cards'}
       </button>
       <div className="calc__result" aria-live="polite" data-testid="result">
         {result && (
