@@ -62,7 +62,8 @@ describe('makePortmanteau — edge cases', () => {
   });
 
   it('strips diacritics and non-letters, ignores surrounding whitespace', () => {
-    expect(makePortmanteau('  café! ', 'dragon')).toBe('Cafagon');
+    // (café + dragon would be "Cafagon", which trips the profanity guard.)
+    expect(makePortmanteau('  café! ', 'rocket')).toBe('Cafocket');
   });
 
   it('returns Title Case', () => {
@@ -79,5 +80,20 @@ describe('makePortmanteau — edge cases', () => {
   it('caps the result at 3 words', () => {
     const out = makePortmanteau('big red snuggle daddy', 'ice cream sandwich');
     expect(out.split(' ').length).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('makePortmanteau — profanity guard', () => {
+  it('skips a blend containing a banned substring and uses plain concatenation', () => {
+    // dinosaur + trex would blend into "Dinosex".
+    expect(makePortmanteau('dinosaur', 'trex')).toBe('Dinosaurrex');
+  });
+
+  it('falls back to the two words side by side when concatenation is banned too', () => {
+    expect(makePortmanteau('na', 'azi')).toBe('Na Azi');
+  });
+
+  it('still blends clean words normally', () => {
+    expect(makePortmanteau('blanket', 'daddy')).toBe('Blankaddy');
   });
 });

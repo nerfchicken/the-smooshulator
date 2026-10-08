@@ -10,6 +10,8 @@
  * degenerate joins. Multi-word inputs blend A's last word with B's first.
  */
 
+import { isBanned } from './banned';
+
 const MAX_WORDS = 3;
 
 /** lowercase, strip diacritics, keep a-z only */
@@ -98,13 +100,26 @@ function collapseTriples(word: string): string {
   return word.replace(/(.)\1{2,}/g, '$1$1');
 }
 
-/** Blend two single normalized words. */
-function blendWords(a: string, b: string): string {
+/** Blend two single normalized words (no profanity check). */
+function blendRaw(a: string, b: string): string {
   const h = head(a);
   const t = tail(h, b);
   const joined = collapseTriples(t.head + t.tail);
   if (joined.length < 4 || joined === a || joined === b) return collapseTriples(a + b);
   return joined;
+}
+
+/**
+ * Blend two single normalized words, as one or more tokens. If the blend spells
+ * something banned, fall back to `a + b.slice(1)`, then to the two words side
+ * by side (re-checking each; the last one is returned regardless).
+ */
+function blendWords(a: string, b: string): string[] {
+  const blend = blendRaw(a, b);
+  if (!isBanned(blend)) return [blend];
+  const concat = collapseTriples(a + b.slice(1));
+  if (!isBanned(concat)) return [concat];
+  return [a, b];
 }
 
 function titleCase(word: string): string {
@@ -127,7 +142,7 @@ export function makePortmanteau(a: string, b: string): string {
   const blend = blendWords(aWords[aWords.length - 1], bWords[0]);
 
   // Cap at MAX_WORDS: drop B's trailing words first, then A's leading words.
-  const out = [...lead, blend, ...trail];
+  const out = [...lead, ...blend, ...trail];
   while (out.length > MAX_WORDS) {
     if (out.length - 1 > lead.length) out.pop();
     else {
