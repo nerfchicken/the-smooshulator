@@ -53,6 +53,10 @@ test('screens', async ({ page }, testInfo) => {
   await expect(page.getByTestId('score')).toBeInViewport(fullyVisible);
   await shot('result');
 
+  // canvas-confetti removes its canvas when the burst ends. Opening the blurred
+  // modal over a still-animating full-screen canvas can crash software-rendered
+  // headless WebKit ("Target crashed"), so let it finish first.
+  await page.waitForFunction('!document.querySelector("canvas")');
   await page.getByRole('button', { name: /Smooshopedia/ }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.waitForTimeout(400);
