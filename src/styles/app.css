@@ -659,6 +659,52 @@ button.slot { appearance: none; padding: 0; margin: 0 auto; font: inherit; color
 }
 .pedia__empty { grid-column: 1 / -1; margin: var(--sp-4) 0; text-align: center; font-weight: 700; color: var(--c-text-dim); }
 
+/* ===== Toast (Add to Home Screen hint, iOS Safari only) ===== */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+  z-index: var(--z-ghost);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--sp-3));
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border: var(--bw-2) solid var(--c-ink);
+  border-radius: var(--r-pill);
+  background: var(--c-cream);
+  color: var(--c-ink);
+  font-weight: 800;
+  font-size: var(--fs-sm);
+  line-height: 1.2;
+  box-shadow: var(--sh-hard), 0 12px 30px rgba(0, 0, 0, 0.5);
+  animation: pop-in var(--d-med) var(--ease-boing);
+}
+.toast__emoji { font-family: var(--font-emoji); font-size: var(--fs-lg); line-height: 1; }
+.toast__text { min-width: 0; }
+.toast__close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: var(--bw-1) solid var(--c-ink);
+  border-radius: var(--r-pill);
+  background: var(--c-pink);
+  color: var(--c-ink);
+  font-weight: 900;
+  font-size: var(--fs-md);
+  line-height: 1;
+  box-shadow: var(--sh-hard-sm);
+}
+.toast__close::before { content: ''; position: absolute; inset: -8px; }
+.toast__close { position: relative; }
+.toast__close:active { transform: translate(1px, 1px); box-shadow: var(--sh-press); }
+
 /* ===== Phone fit (UI pass) =====
    iPhone 13 Safari with its chrome up is 390x664. The calculator alone was ~400px
    (~440 with a result), so with the tray's 140px floor the toolbar always sat

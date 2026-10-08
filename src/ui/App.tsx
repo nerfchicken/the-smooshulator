@@ -3,6 +3,7 @@ import type { Card } from '../engine/types';
 import { BASE_CARDS } from '../data/cards';
 import { discoveryCount, useStore } from '../state/store';
 import { setMuted, unlockAudio } from '../audio/sounds';
+import { A2hsHint } from './A2hsHint';
 import { Calculator } from './Calculator';
 import { Dragon, type DragonMood } from './Dragon';
 import { Smooshopedia } from './Smooshopedia';
@@ -58,6 +59,7 @@ export default function App(): ReactElement {
       {state.pediaOpen && (
         <Smooshopedia state={state} dispatch={dispatch} allCards={allCards} fallbackFocus={pediaButtonRef} />
       )}
+      <A2hsHint found={found} />
     </div>
   );
 }
